@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/v1", tags=["OpenAI Compatible"])
 
 
-# ============= 响应格式枚举 =============
+# ============= 枚举类型 =============
 
 class ResponseFormat(str, Enum):
     JSON = "json"
@@ -139,10 +139,8 @@ def generate_vtt(segments: List[TranscriptionSegment]) -> str:
 
 def map_model_id(model: str) -> Optional[str]:
     """将 OpenAI 模型 ID 映射到 FunASR-API 模型 ID"""
-    model_lower = model.lower()
-
-    # 所有 whisper 开头的模型映射到默认模型
-    if model_lower.startswith("whisper"):
+    # whisper-* 映射到默认模型（兼容 OpenAI SDK）
+    if model.lower().startswith("whisper"):
         return None  # 使用默认模型
 
     # 其他情况直接使用原模型 ID
@@ -161,8 +159,8 @@ def map_model_id(model: str) -> Optional[str]:
 
 | 模型 ID | 说明 |
 |---------|------|
-| `paraformer-large` | 高精度中文 ASR，支持标点和 ITN（默认） |
-| `sensevoice-small` | 多语言 ASR，支持语种检测和情感识别 |
+| `paraformer-large` | 高精度中文 ASR，内置 VAD+标点（默认） |
+| `fun-asr-nano` | 轻量级多语言 ASR，支持 31 种语言、7 大中文方言 |
 
 **兼容性说明：**
 - `whisper-1` 等 OpenAI 模型 ID 会自动映射到默认模型
@@ -217,7 +215,7 @@ async def list_models(request: Request):
 **模型映射：**
 - `whisper-1` → 使用默认模型 (paraformer-large)
 - `paraformer-large` → 高精度中文 ASR
-- `sensevoice-small` → 多语言 ASR
+- `fun-asr-nano` → 多语言+方言 ASR
 
 **暂不支持的参数：**
 `prompt`、`temperature`、`timestamp_granularities` 参数已保留但暂不生效
@@ -259,9 +257,9 @@ async def create_transcription(
         description="要转写的音频文件，支持 mp3/wav/flac/ogg/m4a/amr/pcm 等格式"
     ),
     model: str = Form(
-        "whisper-1",
-        description="模型 ID（whisper-1/paraformer-large/sensevoice-small）",
-        examples=["whisper-1", "paraformer-large", "sensevoice-small"],
+        "paraformer-large",
+        description="ASR 模型选择",
+        json_schema_extra={"enum": ["paraformer-large", "fun-asr-nano"]},
     ),
     language: Optional[str] = Form(
         None,

@@ -106,7 +106,6 @@ async def websocket_asr_test_page():
                     <label>音频格式:</label>
                     <select id="format">
                         <option value="pcm" selected>PCM (16位)</option>
-                        <option value="wav">WAV</option>
                     </select>
                 </div>
                 <div class="form-group">

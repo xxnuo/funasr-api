@@ -14,17 +14,27 @@
                 "realtime": "iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online"
             }
         },
-        "sensevoice-small": {
-            "name": "SenseVoice Small",
+        "fun-asr-nano": {
+            "name": "Fun-ASR-Nano",
             "engine": "funasr",
-            "description": "通用语音识别模型，支持中英文混合识别",
+            "description": "轻量级多语言ASR，支持31种语言、7大中文方言、26种口音，远场高噪声识别优化",
             "languages": [
                 "zh",
-                "en"
+                "en",
+                "ja",
+                "ko",
+                "yue",
+                "wuu",
+                "nan",
+                "hak"
             ],
             "supports_realtime": false,
             "models": {
-                "offline": "iic/SenseVoiceSmall"
+                "offline": "FunAudioLLM/Fun-ASR-Nano-2512"
+            },
+            "extra_kwargs": {
+                "trust_remote_code": true,
+                "remote_code": "./model.py"
             }
         }
     }

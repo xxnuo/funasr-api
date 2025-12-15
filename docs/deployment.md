@@ -75,7 +75,7 @@ curl -X POST "http://localhost:8000/stream/v1/asr" \
 | 环境变量 | 默认值 | 说明 |
 |----------|--------|------|
 | `ASR_MODEL_MODE` | `all` | 模型加载模式：`offline`, `realtime`, `all` |
-| `AUTO_LOAD_CUSTOM_ASR_MODELS` | - | 预加载的自定义模型（如 `sensevoice-small`） |
+| `AUTO_LOAD_CUSTOM_ASR_MODELS` | - | 预加载的自定义模型（如 `fun-asr-nano`） |
 | `ASR_ENABLE_REALTIME_PUNC` | `true` | 是否启用实时标点模型 |
 
 **模式说明：**
@@ -143,7 +143,7 @@ services:
       - LOG_LEVEL=INFO
       - DEVICE=auto
       - ASR_MODEL_MODE=all
-      - AUTO_LOAD_CUSTOM_ASR_MODELS=sensevoice-small
+      - AUTO_LOAD_CUSTOM_ASR_MODELS=fun-asr-nano
       # - APPTOKEN=your_secret_token
     restart: unless-stopped
     deploy:

@@ -304,6 +304,7 @@ class FunASREngine(RealTimeASREngine):
         punc_model_revision: str = "v2.0.4",
         punc_realtime_model: Optional[str] = None,
         enable_lm: bool = True,
+        extra_model_kwargs: Optional[Dict[str, Any]] = None,
     ):
         self.offline_model: Optional[AutoModel] = None
         self.realtime_model: Optional[AutoModel] = None
@@ -327,6 +328,9 @@ class FunASREngine(RealTimeASREngine):
         self.lm_model = settings.LM_MODEL if self.enable_lm else None
         self.lm_weight = settings.LM_WEIGHT
         self.lm_beam_size = settings.LM_BEAM_SIZE
+
+        # 额外的模型加载参数（如 trust_remote_code）
+        self.extra_model_kwargs = extra_model_kwargs or {}
 
         self._load_models_based_on_mode()
 
@@ -357,6 +361,7 @@ class FunASREngine(RealTimeASREngine):
 
     def _load_offline_model(self) -> None:
         """加载离线FunASR模型（支持LM语言模型）"""
+        import sys
         try:
             logger.info(f"正在加载离线FunASR模型: {self.offline_model_path}")
 
@@ -366,8 +371,26 @@ class FunASREngine(RealTimeASREngine):
                 **settings.FUNASR_AUTOMODEL_KWARGS,
             }
 
-            # 添加语言模型支持
-            if self.enable_lm and self.lm_model:
+            # 添加额外的模型参数（如 trust_remote_code）
+            if self.extra_model_kwargs:
+                logger.info(f"应用额外模型参数: {self.extra_model_kwargs}")
+                model_kwargs.update(self.extra_model_kwargs)
+
+            # 对于使用 trust_remote_code 的模型，需要将模型目录添加到 sys.path
+            # 以便 Python 能够导入模型目录中的 model.py
+            if self.extra_model_kwargs.get("trust_remote_code") and self.offline_model_path:
+                from modelscope.hub.snapshot_download import snapshot_download
+                # 获取模型实际下载路径
+                model_path = snapshot_download(self.offline_model_path)
+                logger.info(f"远程代码模型路径: {model_path}")
+                # 将模型目录添加到 sys.path
+                if model_path not in sys.path:
+                    sys.path.insert(0, model_path)
+                    logger.info(f"已将模型目录添加到 sys.path")
+
+            # 添加语言模型支持（仅对支持 LM 的模型启用）
+            # Fun-ASR-Nano 等新模型可能不支持外部 LM
+            if self.enable_lm and self.lm_model and not self.extra_model_kwargs.get("trust_remote_code"):
                 logger.info(f"启用语言模型: {self.lm_model}")
                 model_kwargs["lm_model"] = self.lm_model
                 model_kwargs["lm_model_revision"] = settings.LM_MODEL_REVISION
@@ -375,10 +398,13 @@ class FunASREngine(RealTimeASREngine):
 
             self.offline_model = AutoModel(**model_kwargs)
 
-            if self.enable_lm and self.lm_model:
-                logger.info("离线FunASR模型加载成功（已启用LM语言模型）")
-            else:
-                logger.info("离线FunASR模型加载成功（VAD/PUNC将按需使用全局实例）")
+            extra_info = ""
+            if self.extra_model_kwargs.get("trust_remote_code"):
+                extra_info = "（远程代码模型）"
+            elif self.enable_lm and self.lm_model:
+                extra_info = "（已启用LM语言模型）"
+
+            logger.info(f"离线FunASR模型加载成功{extra_info}")
 
         except Exception as e:
             raise DefaultServerErrorException(f"离线FunASR模型加载失败: {str(e)}")
@@ -412,8 +438,9 @@ class FunASREngine(RealTimeASREngine):
         """使用FunASR转录音频文件（支持动态启用VAD和PUNC）
 
         根据参数组合采用不同策略：
-        1. 只PUNC：手动后处理
-        2. 有VAD：利用全局实例直接构造临时AutoModel（复用已加载模型）
+        1. 远程代码模型（如 Fun-ASR-Nano）：直接调用，不使用外部 VAD/PUNC
+        2. 只PUNC：手动后处理
+        3. 有VAD：利用全局实例直接构造临时AutoModel（复用已加载模型）
         """
         _ = sample_rate  # 当前未使用
         # 优先使用离线模型进行文件识别
@@ -424,75 +451,89 @@ class FunASREngine(RealTimeASREngine):
             )
 
         try:
-            # 根据参数决定是否需要VAD/PUNC
-            need_vad = enable_vad
-            need_punc = enable_punctuation
+            # 检查是否是远程代码模型（如 Fun-ASR-Nano）
+            is_remote_code_model = self.extra_model_kwargs.get("trust_remote_code", False)
 
-            if need_vad:
-                # 使用VAD时，需要构建临时AutoModel包装器
-                # 预加载全局VAD和PUNC实例
-                logger.debug("启用VAD，预加载全局VAD模型")
-                vad_model_instance = get_global_vad_model(self._device)
-
-                punc_model_instance = None
-                if need_punc:
-                    logger.debug("预加载全局PUNC模型")
-                    punc_model_instance = get_global_punc_model(self._device)
-
-                # 创建临时AutoModel包装器（复用已加载的模型）
-                temp_automodel = TempAutoModelWrapper()
-                temp_automodel.model = self.offline_model.model
-                temp_automodel.kwargs = self.offline_model.kwargs
-                temp_automodel.model_path = self.offline_model.model_path
-
-                # 设置VAD（使用全局实例）
-                temp_automodel.vad_model = vad_model_instance.model
-                temp_automodel.vad_kwargs = vad_model_instance.kwargs
-
-                # 设置PUNC（使用全局实例）
-                if punc_model_instance:
-                    temp_automodel.punc_model = punc_model_instance.model
-                    temp_automodel.punc_kwargs = punc_model_instance.kwargs
-
-                logger.debug("临时AutoModel构建完成，调用generate")
+            if is_remote_code_model:
+                # 远程代码模型是端到端 Audio-LLM，不需要外部 VAD/PUNC
+                logger.debug("使用远程代码模型进行识别（端到端 Audio-LLM）")
                 generate_kwargs: Dict[str, Any] = {
-                    "input": audio_path,
+                    "input": [audio_path],  # 注意：需要是列表
                     "cache": {},
+                    "batch_size": 1,  # Fun-ASR-Nano 只支持 batch_size=1
                 }
-                if hotwords:
-                    generate_kwargs["hotword"] = hotwords
-                # 如果启用了LM，添加LM权重参数
-                if self.enable_lm:
-                    generate_kwargs["lm_weight"] = self.lm_weight
-
-                result = temp_automodel.generate(**generate_kwargs)
-            else:
-                # 不使用VAD，直接识别
-                generate_kwargs: Dict[str, Any] = {
-                    "input": audio_path,
-                    "cache": {},
-                }
-                if hotwords:
-                    generate_kwargs["hotword"] = hotwords
-                # 如果启用了LM，添加LM权重参数
-                if self.enable_lm:
-                    generate_kwargs["lm_weight"] = self.lm_weight
-
                 result = self.offline_model.generate(**generate_kwargs)
+            else:
+                # 传统模型处理流程
+                # 根据参数决定是否需要VAD/PUNC
+                need_vad = enable_vad
+                need_punc = enable_punctuation
 
-                # 如果启用了PUNC但没有VAD，需要手动应用PUNC
-                if need_punc and result and len(result) > 0:
-                    text = result[0].get("text", "").strip()
-                    if text:
-                        logger.debug("手动应用PUNC模型（因为未启用VAD）")
+                if need_vad:
+                    # 使用VAD时，需要构建临时AutoModel包装器
+                    # 预加载全局VAD和PUNC实例
+                    logger.debug("启用VAD，预加载全局VAD模型")
+                    vad_model_instance = get_global_vad_model(self._device)
+
+                    punc_model_instance = None
+                    if need_punc:
+                        logger.debug("预加载全局PUNC模型")
                         punc_model_instance = get_global_punc_model(self._device)
-                        punc_result = punc_model_instance.generate(
-                            input=text,
-                            cache={},
-                        )
-                        if punc_result and len(punc_result) > 0:
-                            result[0]["text"] = punc_result[0].get("text", text)
-                            logger.debug("标点符号添加完成")
+
+                    # 创建临时AutoModel包装器（复用已加载的模型）
+                    temp_automodel = TempAutoModelWrapper()
+                    temp_automodel.model = self.offline_model.model
+                    temp_automodel.kwargs = self.offline_model.kwargs
+                    temp_automodel.model_path = self.offline_model.model_path
+
+                    # 设置VAD（使用全局实例）
+                    temp_automodel.vad_model = vad_model_instance.model
+                    temp_automodel.vad_kwargs = vad_model_instance.kwargs
+
+                    # 设置PUNC（使用全局实例）
+                    if punc_model_instance:
+                        temp_automodel.punc_model = punc_model_instance.model
+                        temp_automodel.punc_kwargs = punc_model_instance.kwargs
+
+                    logger.debug("临时AutoModel构建完成，调用generate")
+                    generate_kwargs: Dict[str, Any] = {
+                        "input": audio_path,
+                        "cache": {},
+                    }
+                    if hotwords:
+                        generate_kwargs["hotword"] = hotwords
+                    # 如果启用了LM，添加LM权重参数
+                    if self.enable_lm:
+                        generate_kwargs["lm_weight"] = self.lm_weight
+
+                    result = temp_automodel.generate(**generate_kwargs)
+                else:
+                    # 不使用VAD，直接识别
+                    generate_kwargs: Dict[str, Any] = {
+                        "input": audio_path,
+                        "cache": {},
+                    }
+                    if hotwords:
+                        generate_kwargs["hotword"] = hotwords
+                    # 如果启用了LM，添加LM权重参数
+                    if self.enable_lm:
+                        generate_kwargs["lm_weight"] = self.lm_weight
+
+                    result = self.offline_model.generate(**generate_kwargs)
+
+                    # 如果启用了PUNC但没有VAD，需要手动应用PUNC
+                    if need_punc and result and len(result) > 0:
+                        text = result[0].get("text", "").strip()
+                        if text:
+                            logger.debug("手动应用PUNC模型（因为未启用VAD）")
+                            punc_model_instance = get_global_punc_model(self._device)
+                            punc_result = punc_model_instance.generate(
+                                input=text,
+                                cache={},
+                            )
+                            if punc_result and len(punc_result) > 0:
+                                result[0]["text"] = punc_result[0].get("text", text)
+                                logger.debug("标点符号添加完成")
 
             # 提取识别结果
             if result and len(result) > 0:
@@ -540,41 +581,55 @@ class FunASREngine(RealTimeASREngine):
             )
 
         try:
-            # 预加载全局 VAD 和 PUNC 模型
-            logger.debug("启用 VAD 进行分段识别")
-            vad_model_instance = get_global_vad_model(self._device)
+            # 检查是否是远程代码模型（如 Fun-ASR-Nano）
+            # 这类模型是端到端 Audio-LLM，不需要外部 VAD/PUNC
+            is_remote_code_model = self.extra_model_kwargs.get("trust_remote_code", False)
 
-            punc_model_instance = None
-            if enable_punctuation:
-                punc_model_instance = get_global_punc_model(self._device)
+            if is_remote_code_model:
+                # 远程代码模型使用自己的 inference 方法
+                logger.debug("使用远程代码模型进行识别（端到端 Audio-LLM）")
+                generate_kwargs: Dict[str, Any] = {
+                    "input": [audio_path],  # 注意：需要是列表
+                    "cache": {},
+                    "batch_size": 1,  # Fun-ASR-Nano 只支持 batch_size=1
+                }
+                result = self.offline_model.generate(**generate_kwargs)
+            else:
+                # 传统模型：使用 VAD + PUNC 流水线
+                logger.debug("启用 VAD 进行分段识别")
+                vad_model_instance = get_global_vad_model(self._device)
 
-            # 创建临时 AutoModel 包装器
-            temp_automodel = TempAutoModelWrapper()
-            temp_automodel.model = self.offline_model.model
-            temp_automodel.kwargs = self.offline_model.kwargs
-            temp_automodel.model_path = self.offline_model.model_path
+                punc_model_instance = None
+                if enable_punctuation:
+                    punc_model_instance = get_global_punc_model(self._device)
 
-            # 设置 VAD
-            temp_automodel.vad_model = vad_model_instance.model
-            temp_automodel.vad_kwargs = vad_model_instance.kwargs
+                # 创建临时 AutoModel 包装器
+                temp_automodel = TempAutoModelWrapper()
+                temp_automodel.model = self.offline_model.model
+                temp_automodel.kwargs = self.offline_model.kwargs
+                temp_automodel.model_path = self.offline_model.model_path
 
-            # 设置 PUNC
-            if punc_model_instance:
-                temp_automodel.punc_model = punc_model_instance.model
-                temp_automodel.punc_kwargs = punc_model_instance.kwargs
+                # 设置 VAD
+                temp_automodel.vad_model = vad_model_instance.model
+                temp_automodel.vad_kwargs = vad_model_instance.kwargs
 
-            # 调用识别
-            generate_kwargs: Dict[str, Any] = {
-                "input": audio_path,
-                "cache": {},
-            }
-            if hotwords:
-                generate_kwargs["hotword"] = hotwords
-            # 如果启用了LM，添加LM权重参数
-            if self.enable_lm:
-                generate_kwargs["lm_weight"] = self.lm_weight
+                # 设置 PUNC
+                if punc_model_instance:
+                    temp_automodel.punc_model = punc_model_instance.model
+                    temp_automodel.punc_kwargs = punc_model_instance.kwargs
 
-            result = temp_automodel.generate(**generate_kwargs)
+                # 调用识别
+                generate_kwargs: Dict[str, Any] = {
+                    "input": audio_path,
+                    "cache": {},
+                }
+                if hotwords:
+                    generate_kwargs["hotword"] = hotwords
+                # 如果启用了LM，添加LM权重参数
+                if self.enable_lm:
+                    generate_kwargs["lm_weight"] = self.lm_weight
+
+                result = temp_automodel.generate(**generate_kwargs)
 
             # 解析结果
             segments: List[ASRSegmentResult] = []

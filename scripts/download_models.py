@@ -7,23 +7,57 @@
 
 import os
 import sys
+import urllib.request
 
 # 设置环境变量，避免不必要的输出
 os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "0"  # 下载时显示进度
 os.environ["MODELSCOPE_CACHE"] = "/root/.cache/modelscope"
+
+# 需要额外下载远程代码的模型（ModelScope 不包含 model.py）
+REMOTE_CODE_MODELS = {
+    "FunAudioLLM/Fun-ASR-Nano-2512": {
+        "url": "https://raw.githubusercontent.com/FunAudioLLM/Fun-ASR/main/model.py",
+        "filename": "model.py",
+    }
+}
+
+
+def download_remote_code(model_id: str, model_path: str) -> bool:
+    """下载模型的远程代码文件（如 model.py）"""
+    if model_id not in REMOTE_CODE_MODELS:
+        return True
+
+    config = REMOTE_CODE_MODELS[model_id]
+    url = config["url"]
+    filename = config["filename"]
+    target_path = os.path.join(model_path, filename)
+
+    # 如果文件已存在，跳过下载
+    if os.path.exists(target_path):
+        print(f"    ℹ️  {filename} 已存在，跳过下载")
+        return True
+
+    print(f"    📥 下载远程代码: {filename}")
+    try:
+        urllib.request.urlretrieve(url, target_path)
+        print(f"    ✅ 远程代码下载完成: {target_path}")
+        return True
+    except Exception as e:
+        print(f"    ❌ 远程代码下载失败: {e}")
+        return False
 
 
 def download_models():
     """下载所有需要的模型"""
     from modelscope.hub.snapshot_download import snapshot_download
 
-    # 所有需要下载的模型列表
+    # 所有需要下载的模型列表 (ModelScope)
     models = [
         # Paraformer Large (默认模型) - 一体化版本，内置VAD+标点+时间戳
         ("iic/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch", "Paraformer Large Offline (VAD+PUNC)"),
         ("iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online", "Paraformer Large Online/Realtime"),
-        # SenseVoice Small
-        ("iic/SenseVoiceSmall", "SenseVoice Small"),
+        # Fun-ASR-Nano - 轻量级多语言ASR，支持31种语言和中文方言
+        ("FunAudioLLM/Fun-ASR-Nano-2512", "Fun-ASR-Nano (多语言+方言)"),
         # VAD 模型
         ("iic/speech_fsmn_vad_zh-cn-16k-common-pytorch", "VAD Model"),
         # 标点模型
@@ -47,6 +81,10 @@ def download_models():
         try:
             path = snapshot_download(model_id)
             print(f"    ✅ 完成: {path}")
+
+            # 下载远程代码（如果需要）
+            if not download_remote_code(model_id, path):
+                failed.append((model_id, "远程代码下载失败"))
         except Exception as e:
             print(f"    ❌ 失败: {e}")
             failed.append((model_id, str(e)))

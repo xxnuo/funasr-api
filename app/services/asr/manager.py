@@ -32,6 +32,9 @@ class ModelConfig:
         self.offline_model_path = self.models.get("offline")
         self.realtime_model_path = self.models.get("realtime")
 
+        # 额外参数（如 trust_remote_code 等）
+        self.extra_kwargs = config.get("extra_kwargs", {})
+
     @property
     def has_offline_model(self) -> bool:
         """是否有离线模型"""
@@ -186,6 +189,7 @@ class ModelManager:
                 punc_model=settings.PUNC_MODEL,
                 punc_model_revision=settings.PUNC_MODEL_REVISION,
                 punc_realtime_model=settings.PUNC_REALTIME_MODEL,
+                extra_model_kwargs=config.extra_kwargs,
             )
         else:
             raise InvalidParameterException(f"不支持的引擎类型: {config.engine}")

@@ -16,7 +16,7 @@
 
 ## 主要特性
 
-- **多模型支持** - 集成 Paraformer Large、SenseVoice Small 等高质量 ASR 模型
+- **多模型支持** - 集成 Paraformer Large 和 Fun-ASR-Nano 2 个高质量 ASR 模型
 - **OpenAI API 兼容** - 支持 `/v1/audio/transcriptions` 端点，可直接使用 OpenAI SDK
 - **阿里云 API 兼容** - 支持阿里云语音识别 RESTful API 和 WebSocket 流式协议
 - **WebSocket 流式识别** - 支持实时流式语音识别，低延迟
@@ -129,7 +129,7 @@ curl -X POST "http://localhost:8000/stream/v1/asr" \
 | 模型 ID | 名称 | 说明 | 特性 |
 |---------|------|------|------|
 | `paraformer-large` | Paraformer Large | 高精度中文语音识别（默认） | 支持离线/实时 |
-| `sensevoice-small` | SenseVoice Small | 通用语音识别，支持中英文混合 | 仅离线 |
+| `fun-asr-nano` | Fun-ASR-Nano | 轻量级多语言ASR，支持31种语言和方言 | 仅离线 |
 
 **模型加载模式 (`ASR_MODEL_MODE`):**
 
@@ -140,8 +140,8 @@ curl -X POST "http://localhost:8000/stream/v1/asr" \
 **预加载自定义模型:**
 
 ```bash
-# 启动时预加载 SenseVoice
-export AUTO_LOAD_CUSTOM_ASR_MODELS="sensevoice-small"
+# 启动时预加载 Fun-ASR-Nano
+export AUTO_LOAD_CUSTOM_ASR_MODELS="fun-asr-nano"
 ```
 
 ## 环境变量

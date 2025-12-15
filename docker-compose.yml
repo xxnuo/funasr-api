@@ -25,8 +25,8 @@ services:
 
       # ASR 自定义模型预加载（可选，默认为空）
       # 配置后在启动时自动加载指定的自定义模型，避免首次调用时的等待
-      # 可用模型: sensevoice-small
-      # - AUTO_LOAD_CUSTOM_ASR_MODELS=sensevoice-small  # 预加载模型（多个用逗号分隔）
+      # 可用模型: fun-asr-nano
+      # - AUTO_LOAD_CUSTOM_ASR_MODELS=fun-asr-nano  # 预加载模型
 
       # ASR 实时标点符号模型（可选，默认为 false）
       # - ASR_ENABLE_REALTIME_PUNC=true  # 启用实时标点符号模型（用于流式识别中间结果）
