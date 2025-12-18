@@ -56,6 +56,8 @@ def download_models():
         # Paraformer Large (默认模型) - 一体化版本，内置VAD+标点+时间戳
         ("iic/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch", "Paraformer Large Offline (VAD+PUNC)"),
         ("iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online", "Paraformer Large Online/Realtime"),
+        # SenseVoice Small
+        ("iic/SenseVoiceSmall", "SenseVoice Small"),
         # Fun-ASR-Nano - 轻量级多语言ASR，支持31种语言和中文方言
         ("FunAudioLLM/Fun-ASR-Nano-2512", "Fun-ASR-Nano (多语言+方言)"),
         # VAD 模型

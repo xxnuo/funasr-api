@@ -93,6 +93,7 @@ async def get_asr_params(request: Request) -> ASRQueryParams:
 
 ## 可用模型
 - **paraformer-large**（默认）：高精度中文语音识别，内置VAD+标点
+- **sensevoice-small**：快速语音识别，支持中英文混合
 - **fun-asr-nano**：轻量级多语言ASR，支持31种语言、7大中文方言
 
 ## 音频输入方式
@@ -125,10 +126,10 @@ async def get_asr_params(request: Request) -> ASRQueryParams:
                     "type": "string",
                     "maxLength": 64,
                     "default": "paraformer-large",
-                    "enum": ["paraformer-large", "fun-asr-nano"],
+                    "enum": ["paraformer-large", "sensevoice-small", "fun-asr-nano"],
                     "example": "paraformer-large",
                 },
-                "description": "ASR 模型 ID。可选值：paraformer-large（默认）、fun-asr-nano（多语言+方言）",
+                "description": "ASR 模型 ID。可选值：paraformer-large（默认）、sensevoice-small（快速语音识别）、fun-asr-nano（多语言+方言）",
             },
             {
                 "name": "sample_rate",
@@ -427,6 +428,7 @@ async def health_check(request: Request):
 | 模型 ID | 名称 | 说明 | 支持实时 |
 |---------|------|------|----------|
 | paraformer-large | Paraformer Large | 高精度中文语音识别（默认） | ✅ |
+| sensevoice-small | SenseVoice Small | 快速语音识别，支持中英文混合 | ❌ |
 | fun-asr-nano | Fun-ASR-Nano | 轻量级多语言ASR，支持31种语言和方言 | ❌ |
 
 ## 返回信息

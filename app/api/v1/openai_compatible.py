@@ -160,6 +160,7 @@ def map_model_id(model: str) -> Optional[str]:
 | 模型 ID | 说明 |
 |---------|------|
 | `paraformer-large` | 高精度中文 ASR，内置 VAD+标点（默认） |
+| `sensevoice-small` | 多语言 ASR，支持语种检测和情感识别 |
 | `fun-asr-nano` | 轻量级多语言 ASR，支持 31 种语言、7 大中文方言 |
 
 **兼容性说明：**
@@ -215,6 +216,7 @@ async def list_models(request: Request):
 **模型映射：**
 - `whisper-1` → 使用默认模型 (paraformer-large)
 - `paraformer-large` → 高精度中文 ASR
+- `sensevoice-small` → 多语言 ASR
 - `fun-asr-nano` → 多语言+方言 ASR
 
 **暂不支持的参数：**
@@ -259,7 +261,7 @@ async def create_transcription(
     model: str = Form(
         "paraformer-large",
         description="ASR 模型选择",
-        json_schema_extra={"enum": ["paraformer-large", "fun-asr-nano"]},
+        json_schema_extra={"enum": ["paraformer-large", "sensevoice-small", "fun-asr-nano"]},
     ),
     language: Optional[str] = Form(
         None,
