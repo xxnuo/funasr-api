@@ -74,6 +74,33 @@ class ASRRawResult:
 logger = logging.getLogger(__name__)
 
 
+def resolve_model_path(model_id: Optional[str]) -> str:
+    """将模型 ID 解析为本地缓存路径（如果存在）
+
+    FunASR/ModelScope 的缓存目录结构:
+    ~/.cache/modelscope/hub/{model_id}/
+
+    如果本地缓存存在，返回本地路径；否则返回原始 model_id
+    """
+    import os
+    from pathlib import Path
+
+    if not model_id:
+        raise ValueError("model_id 不能为空")
+
+    # 获取 ModelScope 缓存目录
+    cache_dir = os.environ.get("MODELSCOPE_CACHE", os.path.expanduser("~/.cache/modelscope"))
+    local_path = Path(cache_dir) / "hub" / model_id
+
+    if local_path.exists() and local_path.is_dir():
+        resolved = str(local_path)
+        logger.info(f"模型 {model_id} 使用本地缓存: {resolved}")
+        return resolved
+    else:
+        logger.warning(f"模型 {model_id} 本地缓存不存在: {local_path}")
+        return model_id
+
+
 class ModelType(Enum):
     """模型类型枚举"""
 
@@ -363,10 +390,12 @@ class FunASREngine(RealTimeASREngine):
         """加载离线FunASR模型（支持LM语言模型）"""
         import sys
         try:
-            logger.info(f"正在加载离线FunASR模型: {self.offline_model_path}")
+            # 解析模型路径：优先使用本地缓存
+            resolved_model_path = resolve_model_path(self.offline_model_path)
+            logger.info(f"正在加载离线FunASR模型: {resolved_model_path}")
 
             model_kwargs = {
-                "model": self.offline_model_path,
+                "model": resolved_model_path,
                 "device": self._device,
                 **settings.FUNASR_AUTOMODEL_KWARGS,
             }
@@ -379,9 +408,8 @@ class FunASREngine(RealTimeASREngine):
             # 对于使用 trust_remote_code 的模型，需要将模型目录添加到 sys.path
             # 以便 Python 能够导入模型目录中的 model.py
             if self.extra_model_kwargs.get("trust_remote_code") and self.offline_model_path:
-                from modelscope.hub.snapshot_download import snapshot_download
-                # 获取模型实际下载路径
-                model_path = snapshot_download(self.offline_model_path)
+                # 直接使用已解析的本地路径，不再调用 snapshot_download
+                model_path = resolved_model_path
                 logger.info(f"远程代码模型路径: {model_path}")
                 # 将模型目录添加到 sys.path
                 if model_path not in sys.path:
@@ -391,9 +419,10 @@ class FunASREngine(RealTimeASREngine):
             # 添加语言模型支持（仅对支持 LM 的模型启用）
             # Fun-ASR-Nano 等新模型可能不支持外部 LM
             if self.enable_lm and self.lm_model and not self.extra_model_kwargs.get("trust_remote_code"):
-                logger.info(f"启用语言模型: {self.lm_model}")
-                model_kwargs["lm_model"] = self.lm_model
-                model_kwargs["lm_model_revision"] = settings.LM_MODEL_REVISION
+                # 语言模型也使用本地路径
+                resolved_lm_path = resolve_model_path(self.lm_model)
+                logger.info(f"启用语言模型: {resolved_lm_path}")
+                model_kwargs["lm_model"] = resolved_lm_path
                 model_kwargs["beam_size"] = self.lm_beam_size
 
             self.offline_model = AutoModel(**model_kwargs)
@@ -412,10 +441,12 @@ class FunASREngine(RealTimeASREngine):
     def _load_realtime_model(self) -> None:
         """加载实时FunASR模型（不再内嵌PUNC，改用全局实例）"""
         try:
-            logger.info(f"正在加载实时FunASR模型: {self.realtime_model_path}")
+            # 解析模型路径：优先使用本地缓存
+            resolved_model_path = resolve_model_path(self.realtime_model_path)
+            logger.info(f"正在加载实时FunASR模型: {resolved_model_path}")
 
             model_kwargs = {
-                "model": self.realtime_model_path,
+                "model": resolved_model_path,
                 "device": self._device,
                 **settings.FUNASR_AUTOMODEL_KWARGS,
             }
@@ -751,11 +782,12 @@ def get_global_vad_model(device: str):
     with _vad_model_lock:
         if _global_vad_model is None:
             try:
-                logger.info("正在加载全局VAD模型...")
+                # 解析模型路径：优先使用本地缓存
+                resolved_vad_path = resolve_model_path(settings.VAD_MODEL)
+                logger.info(f"正在加载全局VAD模型: {resolved_vad_path}")
 
                 _global_vad_model = AutoModel(
-                    model=settings.VAD_MODEL,
-                    model_revision=settings.VAD_MODEL_REVISION,
+                    model=resolved_vad_path,
                     device=device,
                     **settings.FUNASR_AUTOMODEL_KWARGS,
                 )
@@ -788,11 +820,12 @@ def get_global_punc_model(device: str):
     with _punc_model_lock:
         if _global_punc_model is None:
             try:
-                logger.info("正在加载全局标点符号模型（离线）...")
+                # 解析模型路径：优先使用本地缓存
+                resolved_punc_path = resolve_model_path(settings.PUNC_MODEL)
+                logger.info(f"正在加载全局标点符号模型（离线）: {resolved_punc_path}")
 
                 _global_punc_model = AutoModel(
-                    model=settings.PUNC_MODEL,
-                    model_revision=settings.PUNC_MODEL_REVISION,
+                    model=resolved_punc_path,
                     device=device,
                     **settings.FUNASR_AUTOMODEL_KWARGS,
                 )
@@ -825,11 +858,12 @@ def get_global_punc_realtime_model(device: str):
     with _punc_realtime_model_lock:
         if _global_punc_realtime_model is None:
             try:
-                logger.info("正在加载全局标点符号模型（实时）...")
+                # 解析模型路径：优先使用本地缓存
+                resolved_punc_realtime_path = resolve_model_path(settings.PUNC_REALTIME_MODEL)
+                logger.info(f"正在加载全局标点符号模型（实时）: {resolved_punc_realtime_path}")
 
                 _global_punc_realtime_model = AutoModel(
-                    model=settings.PUNC_REALTIME_MODEL,
-                    model_revision=settings.PUNC_MODEL_REVISION,
+                    model=resolved_punc_realtime_path,
                     device=device,
                     **settings.FUNASR_AUTOMODEL_KWARGS,
                 )
