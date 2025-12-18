@@ -19,7 +19,7 @@ from .core.exceptions import (
 )
 from .core.logging import setup_logging, get_worker_id
 from .core.executor import shutdown_executor
-from .api.v1 import api_router
+from .api.v1.hub import api_router
 
 # 忽略 Pydantic V2 兼容性警告
 warnings.filterwarnings("ignore", message="Valid config keys have changed in V2")
