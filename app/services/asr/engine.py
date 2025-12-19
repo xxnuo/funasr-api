@@ -88,6 +88,10 @@ def resolve_model_path(model_id: Optional[str]) -> str:
     if not model_id:
         raise ValueError("model_id 不能为空")
 
+    model_path = os.path.join(settings.MODELSCOPE_PATH, model_id)
+    if os.path.exists(model_path):
+        return model_path
+
     # 获取 ModelScope 缓存目录
     cache_dir = os.environ.get("MODELSCOPE_CACHE", os.path.expanduser("~/.cache/modelscope"))
     local_path = Path(cache_dir) / "hub" / model_id

@@ -33,7 +33,7 @@ class Settings:
     BASE_DIR: Path = Path(__file__).parent.parent.parent
     TEMP_DIR: str = "temp"
     DATA_DIR: str = "data"  # 数据持久化目录
-    MODELSCOPE_PATH: str = os.path.expanduser("~/.cache/modelscope/hub")
+    MODELSCOPE_PATH: str = str(BASE_DIR / "models")
 
     # 日志配置
     LOG_LEVEL: str = "INFO"
@@ -48,22 +48,22 @@ class Settings:
         "disable_pbar": True,
         "disable_log": True,  # 禁用FunASR的tables输出
     }
-    ASR_MODELS_CONFIG: str = str(BASE_DIR / "app/services/asr/models.json")
+    ASR_MODELS_CONFIG: str = str(Path(__file__).parent.parent / "services/asr/models.json")
     ASR_MODEL_MODE: str = "all"  # ASR模型加载模式: realtime, offline, all
     ASR_ENABLE_REALTIME_PUNC: bool = True  # 是否启用实时标点模型（用于中间结果展示）
     AUTO_LOAD_CUSTOM_ASR_MODELS: str = (
         ""  # 启动时自动加载的自定义ASR模型列表（逗号分隔，如: fun-asr-nano）
     )
-    VAD_MODEL: str = "iic/speech_fsmn_vad_zh-cn-16k-common-pytorch"
+    VAD_MODEL: str = MODELSCOPE_PATH + "/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch"
     VAD_MODEL_REVISION: str = "v2.0.4"
-    PUNC_MODEL: str = "iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch"
+    PUNC_MODEL: str = MODELSCOPE_PATH + "/iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch"
     PUNC_MODEL_REVISION: str = "v2.0.4"
     PUNC_REALTIME_MODEL: str = (
-        "iic/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727"
+        MODELSCOPE_PATH + "/iic/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727"
     )
 
     # 语言模型配置
-    LM_MODEL: str = "iic/speech_ngram_lm_zh-cn-ai-wesp-fst"
+    LM_MODEL: str = MODELSCOPE_PATH + "/iic/speech_ngram_lm_zh-cn-ai-wesp-fst"
     LM_MODEL_REVISION: str = "v2.0.4"
     LM_WEIGHT: float = 0.15  # 语言模型权重，建议范围 0.1-0.3
     LM_BEAM_SIZE: int = 10  # 语言模型解码 beam size
