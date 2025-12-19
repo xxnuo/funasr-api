@@ -30,7 +30,7 @@ class ASRQueryParams(BaseModel):
 
     model_id: Optional[str] = Field(
         default=None,
-        description="ASR模型ID，不指定则使用默认模型(paraformer-large)",
+        description="ASR模型ID，不指定则使用默认模型(sensevoice-small)",
         max_length=64,
     )
 
@@ -147,7 +147,7 @@ class ASRHealthCheckResponse(HealthCheckResponse):
                 "device": "cuda:0",
                 "version": "1.0.0",
                 "message": "ASR service is running normally",
-                "loaded_models": ["paraformer-large", "sensevoice-small", "fun-asr-nano"],
+                "loaded_models": ["sensevoice-small", "paraformer-large", "fun-asr-nano"],
                 "memory_usage": {
                     "gpu_memory_used": "2.1GB",
                     "gpu_memory_total": "8.0GB",
@@ -185,23 +185,19 @@ class ASRModelInfo(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "id": "paraformer-large",
-                "name": "Paraformer Large",
+                "id": "sensevoice-small",
+                "name": "SenseVoice Small",
                 "engine": "funasr",
-                "description": "高精度中文语音识别模型",
+                "description": "速度最快的语音识别，支持多语言混合、情绪识别，准确度适中",
                 "languages": ["zh"],
                 "default": True,
                 "loaded": True,
                 "supports_realtime": True,
                 "offline_model": {
-                    "path": "iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch",
+                    "path": "iic/SenseVoiceSmall",
                     "exists": True,
                 },
-                "realtime_model": {
-                    "path": "iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online",
-                    "exists": True,
-                },
-                "asr_model_mode": "realtime",
+                "asr_model_mode": "offline",
             }
         }
     }
@@ -220,28 +216,24 @@ class ASRModelsResponse(BaseModel):
             "example": {
                 "models": [
                     {
-                        "id": "paraformer-large",
-                        "name": "Paraformer Large",
+                        "id": "sensevoice-small",
+                        "name": "SenseVoice Small",
                         "engine": "funasr",
-                        "description": "高精度中文语音识别模型",
+                        "description": "速度最快的语音识别，支持多语言混合、情绪识别，准确度适中",
                         "languages": ["zh"],
                         "default": True,
                         "loaded": True,
                         "supports_realtime": True,
                         "offline_model": {
-                            "path": "iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch",
+                            "path": "iic/SenseVoiceSmall",
                             "exists": True,
                         },
-                        "realtime_model": {
-                            "path": "iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online",
-                            "exists": True,
-                        },
-                        "asr_model_mode": "realtime",
+                        "asr_model_mode": "offline",
                     }
                 ],
                 "total": 3,
                 "loaded_count": 1,
-                "asr_model_mode": "realtime",
+                "asr_model_mode": "offline",
             }
         }
     }

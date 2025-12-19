@@ -1,5 +1,18 @@
 {
     "models": {
+        "sensevoice-small": {
+            "name": "SenseVoice Small",
+            "engine": "funasr",
+            "description": "速度最快的语音识别，支持多语言混合、情绪识别，准确度适中",
+            "languages": [
+                "zh",
+                "en"
+            ],
+            "supports_realtime": false,
+            "models": {
+                "offline": "iic/SenseVoiceSmall"
+            }
+        },
         "paraformer-large": {
             "name": "Paraformer Large",
             "engine": "funasr",
@@ -14,23 +27,10 @@
                 "realtime": "iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online"
             }
         },
-        "sensevoice-small": {
-            "name": "SenseVoice Small",
-            "engine": "funasr",
-            "description": "快速语音识别模型，支持中英文混合识别",
-            "languages": [
-                "zh",
-                "en"
-            ],
-            "supports_realtime": false,
-            "models": {
-                "offline": "iic/SenseVoiceSmall"
-            }
-        },
         "fun-asr-nano": {
             "name": "Fun-ASR-Nano",
             "engine": "funasr",
-            "description": "轻量级多语言ASR，支持31种语言、7大中文方言、26种口音，远场高噪声识别优化",
+            "description": "支持识别中文方言、唱歌等，远场高噪声识别优化，速度最慢，准确度适中，有时会有幻觉误识别",
             "languages": [
                 "zh",
                 "en",

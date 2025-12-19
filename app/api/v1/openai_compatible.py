@@ -157,11 +157,13 @@ def map_model_id(model: str) -> Optional[str]:
 
 **可用模型：**
 
-| 模型 ID | 说明 |
-|---------|------|
-| `paraformer-large` | 高精度中文 ASR，内置 VAD+标点（默认） |
-| `sensevoice-small` | 多语言 ASR，支持语种检测和情感识别 |
-| `fun-asr-nano` | 轻量级多语言 ASR，支持 31 种语言、7 大中文方言 |
+| 模型 ID | 名称 | 说明 | 支持实时 |
+|---------|------|------|----------|
+| sensevoice-small | SenseVoice Small | 速度最快的语音识别，支持多语言混合、情绪识别，准确度适中（默认） | 否 |
+| paraformer-large | Paraformer Large | 高精度中文语音识别，内置 VAD + 标点 + 时间戳，对其他语言支持一般，速度适中 | 是 |
+| fun-asr-nano | Fun-ASR-Nano | 支持识别中文方言、唱歌等，远场高噪声识别优化，速度最慢，准确度适中，有时会有幻觉误识别 | 否 |
+
+具体模型特点请参考官方说明：https://help.aliyun.com/zh/model-studio/recording-file-recognition
 
 **兼容性说明：**
 - `whisper-1` 等 OpenAI 模型 ID 会自动映射到默认模型
@@ -214,10 +216,10 @@ async def list_models(request: Request):
 | `vtt` | text/vtt | WebVTT 字幕格式 |
 
 **模型映射：**
-- `whisper-1` → 使用默认模型 (paraformer-large)
-- `paraformer-large` → 高精度中文 ASR
-- `sensevoice-small` → 多语言 ASR
-- `fun-asr-nano` → 多语言+方言 ASR
+- `whisper-1` → 使用默认模型 (sensevoice-small)
+- `sensevoice-small` → 速度最快的语音识别，支持多语言混合、情绪识别，准确度适中
+- `paraformer-large` → 高精度中文语音识别，内置 VAD + 标点 + 时间戳，对其他语言支持一般，速度适中
+- `fun-asr-nano` → 支持识别中文方言、唱歌等，远场高噪声识别优化，速度最慢，准确度适中，有时会有幻觉误识别
 
 **暂不支持的参数：**
 `prompt`、`temperature`、`timestamp_granularities` 参数已保留但暂不生效
@@ -259,9 +261,9 @@ async def create_transcription(
         description="要转写的音频文件，支持 mp3/wav/flac/ogg/m4a/amr/pcm 等格式"
     ),
     model: str = Form(
-        "paraformer-large",
+        "sensevoice-small",
         description="ASR 模型选择",
-        json_schema_extra={"enum": ["paraformer-large", "sensevoice-small", "fun-asr-nano"]},
+        json_schema_extra={"enum": ["sensevoice-small", "paraformer-large", "fun-asr-nano"]},
     ),
     language: Optional[str] = Form(
         None,

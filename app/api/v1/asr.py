@@ -92,9 +92,11 @@ async def get_asr_params(request: Request) -> ASRQueryParams:
 - 最大文件大小：300MB（可通过环境变量 MAX_AUDIO_SIZE 配置）
 
 ## 可用模型
-- **paraformer-large**（默认）：高精度中文语音识别，内置VAD+标点
-- **sensevoice-small**：快速语音识别，支持中英文混合
-- **fun-asr-nano**：轻量级多语言ASR，支持31种语言、7大中文方言
+- **sensevoice-small**：（默认）速度最快的语音识别，支持多语言混合、情绪识别，准确度适中
+- **paraformer-large**：由 sensevoice 升级的高精度中文语音识别，内置 VAD + 标点 + 时间戳，对其他语言支持一般，速度适中
+- **fun-asr-nano**：支持识别中文方言、唱歌等，远场高噪声识别优化，速度最慢，准确度适中，有时会有幻觉误识别
+
+具体模型特点请参考官方说明：https://help.aliyun.com/zh/model-studio/recording-file-recognition
 
 ## 音频输入方式
 1. **请求体上传**：将音频二进制数据作为请求体发送
@@ -125,11 +127,11 @@ async def get_asr_params(request: Request) -> ASRQueryParams:
                 "schema": {
                     "type": "string",
                     "maxLength": 64,
-                    "default": "paraformer-large",
-                    "enum": ["paraformer-large", "sensevoice-small", "fun-asr-nano"],
-                    "example": "paraformer-large",
+                    "default": "sensevoice-small",
+                    "enum": ["sensevoice-small", "paraformer-large", "fun-asr-nano"],
+                    "example": "sensevoice-small",
                 },
-                "description": "ASR 模型 ID。可选值：paraformer-large（默认）、sensevoice-small（快速语音识别）、fun-asr-nano（多语言+方言）",
+                "description": "ASR 模型 ID。可选值：sensevoice-small（默认，快速多语言识别，支持情绪识别）、paraformer-large（高精度中文语音识别，内置 VAD + 标点 + 时间戳）、fun-asr-nano（多语言+方言，支持识别中文方言、唱歌等，速度最慢，准确度适中，有时会有幻觉误识别）",
             },
             {
                 "name": "sample_rate",
@@ -427,9 +429,12 @@ async def health_check(request: Request):
 
 | 模型 ID | 名称 | 说明 | 支持实时 |
 |---------|------|------|----------|
-| paraformer-large | Paraformer Large | 高精度中文语音识别（默认） | ✅ |
-| sensevoice-small | SenseVoice Small | 快速语音识别，支持中英文混合 | ❌ |
-| fun-asr-nano | Fun-ASR-Nano | 轻量级多语言ASR，支持31种语言和方言 | ❌ |
+| sensevoice-small | SenseVoice Small | 速度最快的语音识别，支持多语言混合、情绪识别，准确度适中（默认） | 否 |
+| paraformer-large | Paraformer Large | 高精度中文语音识别，内置 VAD + 标点 + 时间戳，对其他语言支持一般，速度适中 | 是 |
+| fun-asr-nano | Fun-ASR-Nano | 支持识别中文方言、唱歌等，远场高噪声识别优化，速度最慢，准确度适中，有时会有幻觉误识别 | 否 |
+
+具体模型特点请参考官方说明：https://help.aliyun.com/zh/model-studio/recording-file-recognition
+
 
 ## 返回信息
 - **models**: 模型详细信息列表
