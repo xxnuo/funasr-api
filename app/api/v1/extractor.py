@@ -3,7 +3,6 @@
 import logging
 import os
 import tempfile
-from typing import Optional
 
 from fastapi import APIRouter, File, Query, Request, UploadFile
 from fastapi.responses import JSONResponse
@@ -16,7 +15,7 @@ from ...core.exceptions import (
 )
 from ...core.executor import run_sync
 from ...core.security import validate_token
-from ...models.extractor import ExtractAudioResponse
+from ...models.extractor import ExtractAudioResponse, OutputFormat
 from ...services.extractor import extract_audio_from_video
 from ...utils.audio import (
     cleanup_temp_file,
@@ -37,7 +36,9 @@ router = APIRouter(prefix="/v1", tags=["Extractor"])
 async def extract_audio(
     request: Request,
     file: UploadFile = File(..., description="视频文件"),
-    output_format: Optional[str] = Query(default="wav", description="输出音频格式"),
+    output_format: OutputFormat = Query(
+        default=OutputFormat.WAV, description="输出音频格式"
+    ),
 ):
     task_id = generate_task_id()
     video_path = None
@@ -50,11 +51,9 @@ async def extract_audio(
             raise AuthenticationException(content, task_id)
 
         file_suffix = os.path.splitext(file.filename)[1].lower()
-        
+
         with tempfile.NamedTemporaryFile(
-            delete=False,
-            suffix=file_suffix,
-            dir=settings.TEMP_DIR
+            delete=False, suffix=file_suffix, dir=settings.TEMP_DIR
         ) as temp_file:
             video_path = temp_file.name
 
@@ -78,13 +77,11 @@ async def extract_audio(
 
                 temp_file.write(chunk)
 
-        logger.info(
-            f"[{task_id}] 视频接收完成，大小: {total_size / 1024 / 1024:.2f}MB"
-        )
+        logger.info(f"[{task_id}] 视频接收完成，大小: {total_size / 1024 / 1024:.2f}MB")
         logger.info(f"[{task_id}] 临时文件已保存: {video_path}")
 
         extracted_audio_path = await run_sync(
-            extract_audio_from_video, video_path, output_format
+            extract_audio_from_video, video_path, output_format.value
         )
 
         audio_filename = os.path.basename(extracted_audio_path)

@@ -25,11 +25,26 @@ def extract_audio_from_video(video_path: str, output_format: str = "wav") -> str
         ) as temp_file:
             output_path = temp_file.name
 
+        format_configs = {
+            "pcm": ["-acodec", "pcm_s16le", "-f", "s16le"],
+            "wav": ["-acodec", "pcm_s16le"],
+            "opus": ["-acodec", "libopus", "-b:a", "64k"],
+            "speex": ["-acodec", "libspeex"],
+            "amr": ["-acodec", "libopencore_amrnb", "-ar", "8000"],
+            "mp3": ["-acodec", "libmp3lame", "-b:a", "128k"],
+            "aac": ["-acodec", "aac", "-b:a", "128k"],
+            "m4a": ["-acodec", "aac", "-b:a", "128k"],
+            "flac": ["-acodec", "flac"],
+            "ogg": ["-acodec", "libvorbis", "-b:a", "128k"],
+        }
+
+        codec_args = format_configs.get(output_format, ["-acodec", "pcm_s16le"])
+
         cmd = [
             "ffmpeg",
             "-i", video_path,
             "-vn",
-            "-acodec", "pcm_s16le",
+            *codec_args,
             "-ar", "16000",
             "-ac", "1",
             "-y",
