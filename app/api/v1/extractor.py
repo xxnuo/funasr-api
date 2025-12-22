@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import tempfile
 from typing import Optional
 
 from fastapi import APIRouter, File, Query, Request, UploadFile
@@ -19,7 +20,6 @@ from ...services.extractor import extract_audio_from_video
 from ...utils.audio import (
     cleanup_temp_file,
     get_audio_file_suffix,
-    save_audio_to_temp_file,
 )
 from ...utils.common import generate_task_id
 
@@ -49,22 +49,38 @@ async def extract_audio(
         if not result:
             raise AuthenticationException(content, task_id)
 
-        video_data = await file.read()
-        if not video_data:
-            raise InvalidMessageException("视频数据为空", task_id)
+        file_suffix = get_audio_file_suffix(audio_address=file.filename)
+
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=file_suffix,
+            dir=settings.TEMP_DIR
+        ) as temp_file:
+            video_path = temp_file.name
+
+            total_size = 0
+            chunk_size = 1024 * 1024 * 10
+
+            while True:
+                chunk = await file.read(chunk_size)
+                if not chunk:
+                    break
+
+                total_size += len(chunk)
+
+                if total_size > settings.MAX_VIDEO_SIZE:
+                    temp_file.close()
+                    cleanup_temp_file(video_path)
+                    max_size_mb = settings.MAX_VIDEO_SIZE // 1024 // 1024
+                    raise InvalidMessageException(
+                        f"视频文件太大，最大支持{max_size_mb}MB", task_id
+                    )
+
+                temp_file.write(chunk)
 
         logger.info(
-            f"[{task_id}] 视频接收完成，大小: {len(video_data) / 1024 / 1024:.2f}MB"
+            f"[{task_id}] 视频接收完成，大小: {total_size / 1024 / 1024:.2f}MB"
         )
-
-        if len(video_data) > settings.MAX_VIDEO_SIZE:
-            max_size_mb = settings.MAX_VIDEO_SIZE // 1024 // 1024
-            raise InvalidMessageException(
-                f"视频文件太大，最大支持{max_size_mb}MB", task_id
-            )
-
-        file_suffix = get_audio_file_suffix(audio_address=file.filename)
-        video_path = save_audio_to_temp_file(video_data, file_suffix)
         logger.info(f"[{task_id}] 临时文件已保存: {video_path}")
 
         extracted_audio_path = await run_sync(
