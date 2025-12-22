@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import os
 import tempfile
 from typing import Optional
 
@@ -19,7 +20,6 @@ from ...models.extractor import ExtractAudioResponse
 from ...services.extractor import extract_audio_from_video
 from ...utils.audio import (
     cleanup_temp_file,
-    get_audio_file_suffix,
 )
 from ...utils.common import generate_task_id
 
@@ -49,8 +49,8 @@ async def extract_audio(
         if not result:
             raise AuthenticationException(content, task_id)
 
-        file_suffix = get_audio_file_suffix(audio_address=file.filename)
-
+        file_suffix = os.path.splitext(file.filename)[1].lower()
+        
         with tempfile.NamedTemporaryFile(
             delete=False,
             suffix=file_suffix,
@@ -86,8 +86,6 @@ async def extract_audio(
         extracted_audio_path = await run_sync(
             extract_audio_from_video, video_path, output_format
         )
-
-        import os
 
         audio_filename = os.path.basename(extracted_audio_path)
         audio_url = f"/tmp/{audio_filename}"
