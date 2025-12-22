@@ -75,7 +75,10 @@ class Settings:
     ASR_NEARFIELD_FILTER_LOG_ENABLED: bool = True  # 是否记录过滤日志（默认启用）
 
     # 音频处理配置
-    MAX_AUDIO_SIZE: int = 300 * 1024 * 1024  # 300MB
+    MAX_AUDIO_SIZE: int = 1024 * 10 * 1024 * 1024  # 10GB
+
+    # 视频处理配置
+    MAX_VIDEO_SIZE: int = 1024 * 50 * 1024 * 1024  # 50GB
 
     def __init__(self):
         """从环境变量读取配置"""
