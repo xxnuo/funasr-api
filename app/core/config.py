@@ -43,10 +43,11 @@ class Settings:
 
     # ASR模型配置
     FUNASR_AUTOMODEL_KWARGS = {
-        "trust_remote_code": False,
+        "trust_remote_code": True,
         "disable_update": True,
         "disable_pbar": True,
         "disable_log": True,  # 禁用FunASR的tables输出
+        "sentence_timestamp": True
     }
     ASR_MODELS_CONFIG: str = str(Path(__file__).parent.parent / "services/asr/models.json")
     ASR_MODEL_MODE: str = "all"  # ASR模型加载模式: realtime, offline, all
@@ -76,8 +77,8 @@ class Settings:
 
     # 音频处理配置
     MAX_AUDIO_SIZE: int = 1024 * 10 * 1024 * 1024  # 10GB
-    MAX_SEGMENT_SEC: float = 55.0  # 每段最大时长（秒），5s 冗余
-    MIN_SEGMENT_SEC: float = 1.0  # 每段最小时长（秒），避免过短的片段
+    MAX_SEGMENT_SEC: float = 6.0  # 每段最大时长（秒），根据普通对话均值估算
+    MIN_SEGMENT_SEC: float = 0.8  # 每段最小时长（秒），避免过短的片段，根据普通对话均值估算
 
     # 视频处理配置
     MAX_VIDEO_SIZE: int = 1024 * 50 * 1024 * 1024  # 50GB

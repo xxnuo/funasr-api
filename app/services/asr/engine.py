@@ -674,9 +674,12 @@ class FunASREngine(RealTimeASREngine):
                 full_text = result[0].get("text", "").strip()
 
                 # 解析时间戳
-                # FunASR 返回格式可能是:
-                # 1. {"sentence_info": [[start_ms, end_ms, "text"], ...]}
-                # 2. {"timestamp": [[start_ms, end_ms], ...]}
+                # FunASR sentence_info 格式:
+                # [vad_start_ms, vad_end_ms, "text", [[char_start, char_end], ...], [[sent_start, sent_end], ...]]
+                # 其中:
+                # - vad_start_ms/vad_end_ms: VAD 段相对于原音频的绝对时间戳
+                # - sent[3]: 字符级时间戳（相对于 VAD 段开始的偏移量）
+                # - sent[4]: 句子级时间戳（相对于 VAD 段开始的偏移量）
                 sentence_info = result[0].get("sentence_info", [])
 
                 if sentence_info and isinstance(sentence_info, list):
