@@ -23,6 +23,7 @@ from ...utils.audio import (
     normalize_audio_for_asr,
     get_audio_duration,
 )
+from ...utils.text_processing import split_text_by_punctuation
 from ...services.asr.manager import get_model_manager
 
 logger = logging.getLogger(__name__)
@@ -382,26 +383,55 @@ async def create_transcription(
             return PlainTextResponse(content=asr_result.text)
 
         elif response_format == ResponseFormat.SRT:
-            if not segments:
-                # 如果没有分段，创建一个完整的分段
-                segments = [TranscriptionSegment(
+            subtitle_segments = []
+            seg_id = 0
+            for seg in asr_result.segments:
+                split_results = split_text_by_punctuation(
+                    seg.text, seg.start_time, seg.end_time
+                )
+                for text, start, end in split_results:
+                    subtitle_segments.append(TranscriptionSegment(
+                        id=seg_id,
+                        seek=int(start * 100),
+                        start=start,
+                        end=end,
+                        text=text,
+                    ))
+                    seg_id += 1
+            if not subtitle_segments:
+                subtitle_segments = [TranscriptionSegment(
                     id=0,
                     start=0,
                     end=audio_duration,
                     text=asr_result.text,
                 )]
-            srt_content = generate_srt(segments)
+            srt_content = generate_srt(subtitle_segments)
             return PlainTextResponse(content=srt_content, media_type="text/plain")
 
         elif response_format == ResponseFormat.VTT:
-            if not segments:
-                segments = [TranscriptionSegment(
+            subtitle_segments = []
+            seg_id = 0
+            for seg in asr_result.segments:
+                split_results = split_text_by_punctuation(
+                    seg.text, seg.start_time, seg.end_time
+                )
+                for text, start, end in split_results:
+                    subtitle_segments.append(TranscriptionSegment(
+                        id=seg_id,
+                        seek=int(start * 100),
+                        start=start,
+                        end=end,
+                        text=text,
+                    ))
+                    seg_id += 1
+            if not subtitle_segments:
+                subtitle_segments = [TranscriptionSegment(
                     id=0,
                     start=0,
                     end=audio_duration,
                     text=asr_result.text,
                 )]
-            vtt_content = generate_vtt(segments)
+            vtt_content = generate_vtt(subtitle_segments)
             return PlainTextResponse(content=vtt_content, media_type="text/vtt")
 
         elif response_format == ResponseFormat.VERBOSE_JSON:

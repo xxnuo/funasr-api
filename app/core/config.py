@@ -76,8 +76,8 @@ class Settings:
 
     # 音频处理配置
     MAX_AUDIO_SIZE: int = 1024 * 10 * 1024 * 1024  # 10GB
-    MAX_SEGMENT_SEC: float = 8.0  # 每段最大时长（秒），默认8秒以获得更短的字幕段
-    MIN_SEGMENT_SEC: float = 2.0  # 每段最小时长（秒），避免过短的片段
+    MAX_SEGMENT_SEC: float = 55.0  # 每段最大时长（秒），5s 冗余
+    MIN_SEGMENT_SEC: float = 1.0  # 每段最小时长（秒），避免过短的片段
 
     # 视频处理配置
     MAX_VIDEO_SIZE: int = 1024 * 50 * 1024 * 1024  # 50GB
