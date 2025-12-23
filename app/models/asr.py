@@ -65,11 +65,15 @@ class ASRQueryParams(BaseModel):
 
     max_segment_sec: Optional[float] = Field(
         default=settings.MAX_SEGMENT_SEC,
+        ge=0.1,
+        le=55.0,
         description="字幕分段每段最大时长（秒）",
     )
 
     min_segment_sec: Optional[float] = Field(
         default=settings.MIN_SEGMENT_SEC,
+        ge=0.01,
+        le=55.0,
         description="字幕分段每段最小时长（秒）",
     )
 

@@ -293,10 +293,14 @@ async def create_transcription(
     ),
     max_segment_sec: Optional[float] = Form(
         settings.MAX_SEGMENT_SEC,
+        ge=0.1,
+        le=55.0,
         description="字幕分段每段最大时长（秒）"
     ),
     min_segment_sec: Optional[float] = Form(
         settings.MIN_SEGMENT_SEC,
+        ge=0.01,
+        le=55.0,
         description="字幕分段每段最小时长（秒）"
     ),
 ):
@@ -360,6 +364,18 @@ async def create_transcription(
         model_manager = get_model_manager()
         asr_engine = model_manager.get_asr_engine(mapped_model_id)
 
+        # 优化：非字幕格式不需要精确的时间戳分段，可以使用更大的 max_segment_sec 以减少切分，提高处理速度
+        # 但保留用户通过其他参数（如 enable_punctuation, enable_itn 等）的控制
+        actual_max_segment_sec = max_segment_sec
+        if response_format in [ResponseFormat.JSON, ResponseFormat.TEXT]:
+            # 设置一个较大的值（55秒），模型上限值
+            # 这样可以避免 AudioSplitter 进行不必要的 VAD 切分和合并，直接整段（或大段）识别
+            actual_max_segment_sec = 55.0
+            logger.info(
+                f"[OpenAI API] 非字幕格式 ({response_format})，"
+                f"自动调整 max_segment_sec={actual_max_segment_sec} 以加速处理"
+            )
+
         # 执行语音识别
         # 注：prompt 参数接收但不使用，FunASR 热词格式与 OpenAI prompt 不兼容
         asr_result = await run_sync(
@@ -369,7 +385,7 @@ async def create_transcription(
             enable_punctuation=enable_punctuation,
             enable_itn=enable_itn,
             sample_rate=16000,
-            max_segment_sec=max_segment_sec,
+            max_segment_sec=actual_max_segment_sec,
             min_segment_sec=min_segment_sec,
         )
 
