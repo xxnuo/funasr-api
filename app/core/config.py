@@ -90,10 +90,31 @@ class Settings:
 
     def _load_from_env(self):
         """从环境变量加载配置"""
+        # 应用信息
+        self.APP_NAME = os.getenv("APP_NAME", self.APP_NAME)
+        self.APP_VERSION = os.getenv("APP_VERSION", self.APP_VERSION)
+        self.APP_DESCRIPTION = os.getenv("APP_DESCRIPTION", self.APP_DESCRIPTION)
+
         # 服务器配置
         self.HOST = os.getenv("HOST", self.HOST)
         self.PORT = int(os.getenv("PORT", str(self.PORT)))
-        self.DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+        self.DEBUG = os.getenv("DEBUG", str(self.DEBUG)).lower() == "true"
+
+        # 鉴权配置
+        self.APPTOKEN = os.getenv("APPTOKEN", self.APPTOKEN)
+        self.APPKEY = os.getenv("APPKEY", self.APPKEY)
+
+        # 设备配置
+        self.DEVICE = os.getenv("DEVICE", self.DEVICE)
+
+        # 路径配置
+        base_dir_env = os.getenv("BASE_DIR")
+        if base_dir_env:
+            self.BASE_DIR = Path(base_dir_env)
+
+        self.TEMP_DIR = os.getenv("TEMP_DIR", self.TEMP_DIR)
+        self.DATA_DIR = os.getenv("DATA_DIR", self.DATA_DIR)
+        self.MODELSCOPE_PATH = os.getenv("MODELSCOPE_PATH", self.MODELSCOPE_PATH)
 
         # 日志配置
         self.LOG_LEVEL = os.getenv("LOG_LEVEL", self.LOG_LEVEL)
@@ -103,32 +124,33 @@ class Settings:
             os.getenv("LOG_BACKUP_COUNT", str(self.LOG_BACKUP_COUNT))
         )
 
-        # 鉴权配置
-        self.APPTOKEN = os.getenv("APPTOKEN", self.APPTOKEN)
-        self.APPKEY = os.getenv("APPKEY", self.APPKEY)
-
-        # 设备配置
-        self.DEVICE = os.getenv("DEVICE", self.DEVICE)
-
         # ASR模型配置
+        self.ASR_MODELS_CONFIG = os.getenv("ASR_MODELS_CONFIG", self.ASR_MODELS_CONFIG)
         self.ASR_MODEL_MODE = os.getenv("ASR_MODEL_MODE", self.ASR_MODEL_MODE)
         self.ASR_ENABLE_REALTIME_PUNC = (
-            os.getenv("ASR_ENABLE_REALTIME_PUNC", "true").lower() == "true"
+            os.getenv("ASR_ENABLE_REALTIME_PUNC", str(self.ASR_ENABLE_REALTIME_PUNC)).lower() == "true"
         )
         self.AUTO_LOAD_CUSTOM_ASR_MODELS = os.getenv(
             "AUTO_LOAD_CUSTOM_ASR_MODELS", self.AUTO_LOAD_CUSTOM_ASR_MODELS
         )
+        self.VAD_MODEL = os.getenv("VAD_MODEL", self.VAD_MODEL)
+        self.VAD_MODEL_REVISION = os.getenv("VAD_MODEL_REVISION", self.VAD_MODEL_REVISION)
+        self.PUNC_MODEL = os.getenv("PUNC_MODEL", self.PUNC_MODEL)
+        self.PUNC_MODEL_REVISION = os.getenv("PUNC_MODEL_REVISION", self.PUNC_MODEL_REVISION)
+        self.PUNC_REALTIME_MODEL = os.getenv("PUNC_REALTIME_MODEL", self.PUNC_REALTIME_MODEL)
 
         # 语言模型配置
+        self.LM_MODEL = os.getenv("LM_MODEL", self.LM_MODEL)
+        self.LM_MODEL_REVISION = os.getenv("LM_MODEL_REVISION", self.LM_MODEL_REVISION)
         self.ASR_ENABLE_LM = (
-            os.getenv("ASR_ENABLE_LM", "true").lower() == "true"
+            os.getenv("ASR_ENABLE_LM", str(self.ASR_ENABLE_LM)).lower() == "true"
         )
         self.LM_WEIGHT = float(os.getenv("LM_WEIGHT", str(self.LM_WEIGHT)))
         self.LM_BEAM_SIZE = int(os.getenv("LM_BEAM_SIZE", str(self.LM_BEAM_SIZE)))
 
         # 远场过滤配置
         self.ASR_ENABLE_NEARFIELD_FILTER = (
-            os.getenv("ASR_ENABLE_NEARFIELD_FILTER", "true").lower() == "true"
+            os.getenv("ASR_ENABLE_NEARFIELD_FILTER", str(self.ASR_ENABLE_NEARFIELD_FILTER)).lower() == "true"
         )
         self.ASR_NEARFIELD_RMS_THRESHOLD = float(
             os.getenv(
@@ -136,13 +158,18 @@ class Settings:
             )
         )
         self.ASR_NEARFIELD_FILTER_LOG_ENABLED = (
-            os.getenv("ASR_NEARFIELD_FILTER_LOG_ENABLED", "true").lower() == "true"
+            os.getenv("ASR_NEARFIELD_FILTER_LOG_ENABLED", str(self.ASR_NEARFIELD_FILTER_LOG_ENABLED)).lower() == "true"
         )
 
         # 音频处理配置
         self.MAX_AUDIO_SIZE = int(
             os.getenv("MAX_AUDIO_SIZE", str(self.MAX_AUDIO_SIZE))
         )
+        self.MAX_SEGMENT_SEC = float(os.getenv("MAX_SEGMENT_SEC", str(self.MAX_SEGMENT_SEC)))
+        self.MIN_SEGMENT_SEC = float(os.getenv("MIN_SEGMENT_SEC", str(self.MIN_SEGMENT_SEC)))
+
+        # 视频处理配置
+        self.MAX_VIDEO_SIZE = int(os.getenv("MAX_VIDEO_SIZE", str(self.MAX_VIDEO_SIZE)))
 
     def _ensure_directories(self):
         """确保必需的目录存在"""
