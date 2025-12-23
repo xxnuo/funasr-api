@@ -56,8 +56,8 @@ class AudioSplitter:
     """
 
     # 默认配置
-    DEFAULT_MAX_SEGMENT_SEC = 55.0  # 每段最大时长（秒），留5秒余量
-    DEFAULT_MIN_SEGMENT_SEC = 1.0  # 每段最小时长（秒）
+    DEFAULT_MAX_SEGMENT_SEC = settings.MAX_SEGMENT_SEC  # 每段最大时长（秒），调整为8秒以获得更短的字幕段
+    DEFAULT_MIN_SEGMENT_SEC = settings.MIN_SEGMENT_SEC  # 每段最小时长（秒），避免过短的片段
     DEFAULT_SAMPLE_RATE = 16000  # 默认采样率
 
     def __init__(

@@ -294,6 +294,7 @@ async def asr_transcribe(
             enable_punctuation=True,  # 默认开启标点预测
             enable_itn=True,  # 默认开启数字转换
             sample_rate=params.sample_rate,
+            max_segment_sec=settings.MAX_SEGMENT_SEC
         )
 
         logger.info(f"[{task_id}] 识别完成，共 {len(asr_result.segments)} 个分段，总字符: {len(asr_result.text)}")

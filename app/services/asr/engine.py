@@ -150,7 +150,7 @@ class BaseASREngine(ABC):
         enable_punctuation: bool = False,
         enable_itn: bool = False,
         sample_rate: int = 16000,
-        max_segment_sec: float = 55.0,
+        max_segment_sec: float = settings.MAX_SEGMENT_SEC,
     ) -> ASRFullResult:
         """转录长音频文件（自动分段）
 
