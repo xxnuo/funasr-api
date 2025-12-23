@@ -23,7 +23,7 @@ from ...utils.audio import (
     normalize_audio_for_asr,
     get_audio_duration,
 )
-from ...utils.text_processing import split_text_by_punctuation
+from ...utils.text_processing import split_text_by_punctuation, clean_asr_tags
 from ...services.asr.manager import get_model_manager
 
 logger = logging.getLogger(__name__)
@@ -380,7 +380,8 @@ async def create_transcription(
 
         # 根据 response_format 返回不同格式
         if response_format == ResponseFormat.TEXT:
-            return PlainTextResponse(content=asr_result.text)
+            clean_text = clean_asr_tags(asr_result.text)
+            return PlainTextResponse(content=clean_text)
 
         elif response_format == ResponseFormat.SRT:
             subtitle_segments = []
