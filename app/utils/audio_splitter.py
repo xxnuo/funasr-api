@@ -56,8 +56,8 @@ class AudioSplitter:
     """
 
     # 默认配置
-    DEFAULT_MAX_SEGMENT_SEC = settings.MAX_SEGMENT_SEC  # 每段最大时长（秒），调整为8秒以获得更短的字幕段
-    DEFAULT_MIN_SEGMENT_SEC = settings.MIN_SEGMENT_SEC  # 每段最小时长（秒），避免过短的片段
+    DEFAULT_MAX_SEGMENT_SEC = settings.MAX_SEGMENT_SEC  # 字幕分段每段最大时长（秒），调整为8秒以获得更短的字幕段
+    DEFAULT_MIN_SEGMENT_SEC = settings.MIN_SEGMENT_SEC  # 字幕分段每段最小时长（秒），避免过短的片段
     DEFAULT_SAMPLE_RATE = 16000  # 默认采样率
 
     def __init__(
@@ -69,8 +69,8 @@ class AudioSplitter:
         """初始化音频分割器
 
         Args:
-            max_segment_sec: 每段最大时长（秒）
-            min_segment_sec: 每段最小时长（秒）
+            max_segment_sec: 字幕分段每段最大时长（秒）
+            min_segment_sec: 字幕分段每段最小时长（秒）
             device: 计算设备
         """
         self.max_segment_sec = max_segment_sec
@@ -340,17 +340,18 @@ class AudioSplitter:
 def split_long_audio(
     audio_path: str,
     max_segment_sec: float = AudioSplitter.DEFAULT_MAX_SEGMENT_SEC,
+    min_segment_sec: float = AudioSplitter.DEFAULT_MIN_SEGMENT_SEC,
     device: str = "auto",
 ) -> List[AudioSegment]:
     """分割长音频的便捷函数
 
     Args:
         audio_path: 音频文件路径
-        max_segment_sec: 每段最大时长（秒）
+        max_segment_sec: 字幕分段每段最大时长（秒）
         device: 计算设备
 
     Returns:
         音频片段列表
     """
-    splitter = AudioSplitter(max_segment_sec=max_segment_sec, device=device)
+    splitter = AudioSplitter(max_segment_sec=max_segment_sec, min_segment_sec=min_segment_sec, device=device)
     return splitter.split_audio_file(audio_path)

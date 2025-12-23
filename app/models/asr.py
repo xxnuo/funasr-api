@@ -14,6 +14,8 @@ from .common import (
     ErrorResponse,
 )
 
+from ..core.config import settings
+
 
 # ============= 请求模型 =============
 
@@ -49,6 +51,26 @@ class ASRQueryParams(BaseModel):
         default=None,
         description="音频文件下载链接（HTTP/HTTPS），格式自动识别",
         max_length=512,
+    )
+
+    enable_punctuation: Optional[bool] = Field(
+        default=True,
+        description="是否启用标点预测",
+    )
+
+    enable_itn: Optional[bool] = Field(
+        default=True,
+        description="是否启用ITN（数字转换）",
+    )
+
+    max_segment_sec: Optional[float] = Field(
+        default=settings.MAX_SEGMENT_SEC,
+        description="字幕分段每段最大时长（秒）",
+    )
+
+    min_segment_sec: Optional[float] = Field(
+        default=settings.MIN_SEGMENT_SEC,
+        description="字幕分段每段最小时长（秒）",
     )
 
 

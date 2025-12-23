@@ -168,6 +168,48 @@ async def get_asr_params(request: Request) -> ASRQueryParams:
                 "description": "音频文件 URL（HTTP/HTTPS）。指定此参数时，将从 URL 下载音频而非读取请求体",
             },
             {
+                "name": "enable_punctuation",
+                "in": "query",
+                "required": False,
+                "schema": {
+                    "type": "boolean",
+                    "default": True,
+                    "example": True,
+                },
+                "description": "是否启用标点预测",
+            },
+            {
+                "name": "enable_itn",
+                "in": "query",
+                "required": False,
+                "schema": {
+                    "type": "boolean",
+                    "default": True,
+                    "example": True,
+                },
+                "description": "是否启用 ITN（数字转换）",
+            },
+            {
+                "name": "max_segment_sec",
+                "in": "query",
+                "required": False,
+                "schema": {
+                    "type": "number",
+                    "example": 6.0,
+                },
+                "description": "字幕分段每段最大时长（秒）",
+            },
+            {
+                "name": "min_segment_sec",
+                "in": "query",
+                "required": False,
+                "schema": {
+                    "type": "number",
+                    "example": 0.8,
+                },
+                "description": "字幕分段每段最小时长（秒）",
+            },
+            {
                 "name": "X-NLS-Token",
                 "in": "header",
                 "required": False,
@@ -291,10 +333,11 @@ async def asr_transcribe(
             asr_engine.transcribe_long_audio,
             audio_path=normalized_audio_path,
             hotwords=hotwords,
-            enable_punctuation=True,  # 默认开启标点预测
-            enable_itn=True,  # 默认开启数字转换
+            enable_punctuation=params.enable_punctuation,
+            enable_itn=params.enable_itn,
             sample_rate=params.sample_rate,
-            max_segment_sec=settings.MAX_SEGMENT_SEC
+            max_segment_sec=params.max_segment_sec,
+            min_segment_sec=params.min_segment_sec,
         )
 
         logger.info(f"[{task_id}] 识别完成，共 {len(asr_result.segments)} 个分段，总字符: {len(asr_result.text)}")

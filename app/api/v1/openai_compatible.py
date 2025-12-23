@@ -283,6 +283,22 @@ async def create_transcription(
         alias="timestamp_granularities[]",
         description="时间戳粒度（暂不支持，保留兼容）"
     ),
+    enable_punctuation: Optional[bool] = Form(
+        True,
+        description="是否启用标点预测"
+    ),
+    enable_itn: Optional[bool] = Form(
+        True,
+        description="是否启用 ITN（数字转换）"
+    ),
+    max_segment_sec: Optional[float] = Form(
+        settings.MAX_SEGMENT_SEC,
+        description="字幕分段每段最大时长（秒）"
+    ),
+    min_segment_sec: Optional[float] = Form(
+        settings.MIN_SEGMENT_SEC,
+        description="字幕分段每段最小时长（秒）"
+    ),
 ):
     """音频转写 API (OpenAI Audio API 兼容)"""
     # 标记暂不支持的参数（保留以兼容 OpenAI API）
@@ -350,9 +366,11 @@ async def create_transcription(
             asr_engine.transcribe_long_audio,
             audio_path=normalized_audio_path,
             hotwords="",
-            enable_punctuation=True,
-            enable_itn=True,
+            enable_punctuation=enable_punctuation,
+            enable_itn=enable_itn,
             sample_rate=16000,
+            max_segment_sec=max_segment_sec,
+            min_segment_sec=min_segment_sec,
         )
 
         logger.info(f"[OpenAI API] 识别完成: {len(asr_result.text)} 字符")

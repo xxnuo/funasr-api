@@ -151,6 +151,7 @@ class BaseASREngine(ABC):
         enable_itn: bool = False,
         sample_rate: int = 16000,
         max_segment_sec: float = settings.MAX_SEGMENT_SEC,
+        min_segment_sec: float = settings.MIN_SEGMENT_SEC,
     ) -> ASRFullResult:
         """转录长音频文件（自动分段）
 
@@ -161,6 +162,7 @@ class BaseASREngine(ABC):
             enable_itn: 是否启用 ITN
             sample_rate: 采样率
             max_segment_sec: 每段最大时长（秒）
+            min_segment_sec: 每段最小时长（秒）
 
         Returns:
             ASRFullResult: 包含完整文本、分段结果和时长的结果
@@ -205,7 +207,9 @@ class BaseASREngine(ABC):
 
             # 长音频，需要分段
             splitter = AudioSplitter(
-                max_segment_sec=max_segment_sec, device=self.device
+                max_segment_sec=max_segment_sec,
+                min_segment_sec=min_segment_sec,
+                device=self.device
             )
             segments = splitter.split_audio_file(audio_path)
 
