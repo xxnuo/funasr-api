@@ -390,6 +390,8 @@ async def create_transcription(
                     seg.text, seg.start_time, seg.end_time
                 )
                 for text, start, end in split_results:
+                    if not text.strip():
+                        continue
                     subtitle_segments.append(TranscriptionSegment(
                         id=seg_id,
                         seek=int(start * 100),
@@ -416,6 +418,8 @@ async def create_transcription(
                     seg.text, seg.start_time, seg.end_time
                 )
                 for text, start, end in split_results:
+                    if not text.strip():
+                        continue
                     subtitle_segments.append(TranscriptionSegment(
                         id=seg_id,
                         seek=int(start * 100),
