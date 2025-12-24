@@ -180,7 +180,10 @@ async def websocket_asr_test_page():
 
             <div class="layout-split">
                 <div class="panel">
-                    <div class="panel-header">识别结果</div>
+                    <div class="panel-header">
+                        识别结果
+                        <button onclick="copyResult()" style="padding: 4px 12px; font-size: 12px;">复制</button>
+                    </div>
                     <div id="resultText" class="content-area"></div>
                 </div>
                 <div class="panel">
@@ -274,6 +277,16 @@ async def websocket_asr_test_page():
                 }
                 resultEl.innerHTML = displayHtml;
                 resultEl.scrollTop = resultEl.scrollHeight;
+            }
+
+            function copyResult() {
+                const text = document.getElementById('resultText').innerText;
+                if (!text) return;
+                navigator.clipboard.writeText(text).then(() => {
+                    log('已复制到剪贴板', 'success');
+                }).catch(err => {
+                    log('复制失败: ' + err, 'error');
+                });
             }
 
             async function startRecognition() {
