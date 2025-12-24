@@ -36,9 +36,19 @@ async def aliyun_websocket_asr_endpoint(websocket: WebSocket):
             pass
 
 
-@router.get("/test", response_class=HTMLResponse)
+@router.get("/test", response_class=HTMLResponse,
+description="""WebSocket ASR测试页面""",
+summary="""
+WebSocket ASR测试页面
+
+## 使用方法
+
+复制链接 https://funasr-ai.xxx.heiyu.space/ws/v1/asr/test
+
+将其中的 xxx 替换为你的设备名，然后用这个链接在浏览器中打开测试页面，会调用系统麦克风实时识别音频
+""")
 async def websocket_asr_test_page():
-    """阿里云WebSocket ASR测试页面"""
+    """WebSocket ASR测试页面"""
     html_content = """
     <!DOCTYPE html>
     <html>
