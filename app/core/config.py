@@ -43,11 +43,10 @@ class Settings:
 
     # ASR模型配置
     FUNASR_AUTOMODEL_KWARGS = {
-        "trust_remote_code": True,
+        "trust_remote_code": False,
         "disable_update": True,
         "disable_pbar": True,
-        "disable_log": True,  # 禁用FunASR的tables输出
-        "sentence_timestamp": True
+        "disable_log": True,
     }
     ASR_MODELS_CONFIG: str = str(Path(__file__).parent.parent / "services/asr/models.json")
     ASR_MODEL_MODE: str = "all"  # ASR模型加载模式: realtime, offline, all
