@@ -54,6 +54,7 @@ ASR 通用服务（地址 asr-ai.xxx.heiyu.space）是 slim 版本，仅内置�
         "disable_update": True,
         "disable_pbar": True,
         "disable_log": True,
+        "local_files_only": True,
     }
     ASR_MODELS_CONFIG: str = str(Path(__file__).parent.parent / "services/asr/models.json")
     ASR_MODEL_MODE: str = "all"  # ASR模型加载模式: realtime, offline, all
