@@ -37,8 +37,8 @@ async def aliyun_websocket_asr_endpoint(websocket: WebSocket):
 
 
 @router.get("/test", response_class=HTMLResponse,
-description="""WebSocket ASR测试页面""",
-summary="""
+summary="""WebSocket ASR测试页面""",
+description="""
 WebSocket ASR测试页面
 
 ## 使用方法
