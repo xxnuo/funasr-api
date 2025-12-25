@@ -15,7 +15,14 @@ class Settings:
     # 应用信息
     APP_NAME: str = "FunASR-API Server"
     APP_VERSION: str = "1.0.0"
-    APP_DESCRIPTION: str = "基于FunASR的语音识别API服务"
+    APP_DESCRIPTION: str = """基于 FunASR 的语音识别 API 服务
+
+注意：本通用服务有两个版本，仅 FunASR 应用（地址 funasr-ai.xxx.heiyu.space）内置了全部三个模型！
+
+ASR 通用服务（地址 asr-ai.xxx.heiyu.space）是 slim 版本，仅内置了 sensevoice-small 模型！运行其他模型会报错！
+
+如果你需要使用其他两个模型，请使用 FunASR 应用（下载地址 https://appstore.wl1.heiyu.space/#/shop/detail/cloud.lazycat.aipod.funasr）！
+"""
 
     # 服务器配置
     HOST: str = "0.0.0.0"
