@@ -19,9 +19,9 @@ class Settings:
 
 注意：本通用服务有两个版本，仅 FunASR 应用（地址 funasr-ai.xxx.heiyu.space）内置了全部三个模型！
 
-ASR 通用服务（地址 asr-ai.xxx.heiyu.space）是 slim 版本，仅内置了 sensevoice-small 模型！运行其他模型会报错！
+ASR 通用服务（地址 asr-ai.xxx.heiyu.space）是 slim 版本，仅内置了 sensevoice-small 模型并且不支持 WebSocket 流式识别！运行其他模型或者调用流式识别会报错！
 
-如果你需要使用其他两个模型，请使用 FunASR 应用（下载地址 https://appstore.wl1.heiyu.space/#/shop/detail/cloud.lazycat.aipod.funasr）！
+如果你需要使用其他两个模型或者使用 WebSocket 流式识别，请使用 FunASR 应用（下载地址 https://appstore.wl1.heiyu.space/#/shop/detail/cloud.lazycat.aipod.funasr）！
 """
 
     # 服务器配置
