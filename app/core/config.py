@@ -17,7 +17,7 @@ class Settings:
     APP_VERSION: str = "1.0.0"
     APP_DESCRIPTION: str = """基于 FunASR 的语音识别 API 服务
 
-注意：本通用服务有两个版本，仅 FunASR 应用（地址 funasr-ai.xxx.heiyu.space）内置了全部三个模型！
+注意：本服务有两个版本，仅 FunASR 应用（地址 funasr-ai.xxx.heiyu.space）内置了全部三个模型！
 
 ASR 通用服务（地址 asr-ai.xxx.heiyu.space）是 slim 版本，仅内置了 sensevoice-small 模型并且不支持 WebSocket 流式识别！运行其他模型或者调用流式识别会报错！
 

@@ -20,6 +20,7 @@ from .core.exceptions import (
 from .core.logging import setup_logging, get_worker_id
 from .core.executor import shutdown_executor
 from .api.v1.hub import api_router
+from .api.compatible.apis import compatible_router
 
 # 忽略 Pydantic V2 兼容性警告
 warnings.filterwarnings("ignore", message="Valid config keys have changed in V2")
@@ -144,6 +145,9 @@ def create_app() -> FastAPI:
             "version": settings.APP_VERSION,
             "message": "FunASR API Server is running normally",
         }
+
+    # 兼容性接口
+    app.include_router(compatible_router)
 
     # 根路径
     @app.get("/", summary="根路径", description="API服务根路径")
