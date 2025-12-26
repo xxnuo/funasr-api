@@ -60,7 +60,7 @@ class ModelManager:
     def __init__(self):
         self._models_config: Dict[str, ModelConfig] = {}
         self._loaded_engines: Dict[str, BaseASREngine] = {}
-        self._default_model_id: Optional[str] = None
+        self._default_model_id: Optional[str] = "sensevoice-small"
         self._load_models_config()
 
     def _load_models_config(self) -> None:
