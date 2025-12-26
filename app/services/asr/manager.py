@@ -18,6 +18,7 @@ from .engine import BaseASREngine, FunASREngine
 
 logger = logging.getLogger(__name__)
 
+
 class ModelConfig:
     """模型配置类"""
 
@@ -79,11 +80,11 @@ class ModelManager:
             for model_id, model_config in config["models"].items():
                 self._models_config[model_id] = ModelConfig(model_id, model_config)
                 if model_config.get("default", False):
-                    self._default_model_id = model_id
+                    self._default_model_id = settings.DEFAULT_ASR_MODEL_ID
 
             if not self._default_model_id and self._models_config:
                 # 如果没有指定默认模型，选择第一个
-                self._default_model_id = list(self._models_config.keys())[0]
+                self._default_model_id = settings.DEFAULT_ASR_MODEL_ID
 
         except (json.JSONDecodeError, KeyError) as e:
             raise DefaultServerErrorException(f"模型配置文件格式错误: {str(e)}")
@@ -91,14 +92,16 @@ class ModelManager:
     def get_model_config(self, model_id: Optional[str] = None) -> ModelConfig:
         """获取模型配置"""
         if model_id is None:
-            model_id = self._default_model_id
+            model_id = settings.DEFAULT_ASR_MODEL_ID
 
         if not model_id:
             raise InvalidParameterException("未指定模型且没有默认模型")
 
         if model_id not in self._models_config:
-            logger.warning(f"未知的模型: {model_id}, 使用默认模型: {self._default_model_id}")
-            model_id = self._default_model_id
+            logger.warning(
+                f"未知的模型: {model_id}, 使用默认模型: {settings.DEFAULT_ASR_MODEL_ID}"
+            )
+            model_id = settings.DEFAULT_ASR_MODEL_ID
             # available_models = ", ".join(self._models_config.keys())
             # raise InvalidParameterException(
             #     f"未知的模型: {model_id}，可用模型: {available_models}"
