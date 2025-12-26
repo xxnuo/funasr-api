@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 def cleanup_temp_directory():
     """清理临时目录中的旧文件"""
     import time
+
     temp_dir = settings.TEMP_DIR
     if not os.path.exists(temp_dir):
         return
@@ -83,7 +84,9 @@ async def lifespan(app: FastAPI):
             # 记录加载结果
             loaded_count = sum(1 for r in preload_result.values() if r.get("loaded"))
             total_count = len(preload_result)
-            logger.info(f"Worker [{worker_id}] 模型加载完成: {loaded_count}/{total_count}")
+            logger.info(
+                f"Worker [{worker_id}] 模型加载完成: {loaded_count}/{total_count}"
+            )
 
         except Exception as e:
             logger.error(f"Worker [{worker_id}] 模型预加载失败: {e}")
@@ -133,9 +136,18 @@ def create_app() -> FastAPI:
     # 注册API路由
     app.include_router(api_router)
 
+    # 健康检测接口
+    @app.get("/health", summary="健康检测", description="健康检测接口")
+    def health():
+        return {
+            "status": "ok",
+            "version": settings.APP_VERSION,
+            "message": "FunASR API Server is running normally",
+        }
+
     # 根路径
     @app.get("/", summary="根路径", description="API服务根路径")
-    async def root():
+    def root():
         return {
             "message": settings.APP_NAME,
             "version": settings.APP_VERSION,
