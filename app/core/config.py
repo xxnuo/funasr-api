@@ -49,6 +49,7 @@ ASR 通用服务（地址 asr-ai.xxx.heiyu.space）是 slim 版本，仅内置�
     LOG_BACKUP_COUNT: int = 50  # 保留50个备份文件
 
     # ASR模型配置
+    DEFAULT_ASR_MODEL_ID: str = "sensevoice-small"
     FUNASR_AUTOMODEL_KWARGS = {
         "trust_remote_code": False,
         "disable_update": True,

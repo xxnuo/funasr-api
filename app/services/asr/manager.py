@@ -6,14 +6,17 @@ ASR模型管理器
 """
 
 import json
-import torch
-from typing import Dict, Any, Optional, List
+import logging
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import torch
 
 from ...core.config import settings
 from ...core.exceptions import DefaultServerErrorException, InvalidParameterException
 from .engine import BaseASREngine, FunASREngine
 
+logger = logging.getLogger(__name__)
 
 class ModelConfig:
     """模型配置类"""
@@ -60,7 +63,7 @@ class ModelManager:
     def __init__(self):
         self._models_config: Dict[str, ModelConfig] = {}
         self._loaded_engines: Dict[str, BaseASREngine] = {}
-        self._default_model_id: Optional[str] = "sensevoice-small"
+        self._default_model_id: Optional[str] = settings.DEFAULT_ASR_MODEL_ID
         self._load_models_config()
 
     def _load_models_config(self) -> None:
@@ -94,10 +97,12 @@ class ModelManager:
             raise InvalidParameterException("未指定模型且没有默认模型")
 
         if model_id not in self._models_config:
-            available_models = ", ".join(self._models_config.keys())
-            raise InvalidParameterException(
-                f"未知的模型: {model_id}，可用模型: {available_models}"
-            )
+            logger.warning(f"未知的模型: {model_id}, 使用默认模型: {self._default_model_id}")
+            model_id = self._default_model_id
+            # available_models = ", ".join(self._models_config.keys())
+            # raise InvalidParameterException(
+            #     f"未知的模型: {model_id}，可用模型: {available_models}"
+            # )
 
         return self._models_config[model_id]
 
