@@ -20,13 +20,14 @@ from ...utils.text_processing import apply_itn_to_text
 
 
 class TempAutoModelWrapper:
-    """临时AutoModel包装器，用于动态组合VAD/PUNC模型"""
+    """临时AutoModel包装器，用于动态组合VAD/PUNC/SPK模型"""
 
     def __init__(self) -> None:
         self.model: Any = None
         self.kwargs: Any = {}
         self.model_path: Any = ""
         self.spk_model: Any = None
+        self.spk_kwargs: Any = {}
         self.vad_model: Any = None
         self.vad_kwargs: Any = {}
         self.punc_model: Any = None
@@ -519,6 +520,11 @@ class FunASREngine(RealTimeASREngine):
                         logger.debug("预加载全局PUNC模型")
                         punc_model_instance = get_global_punc_model(self._device)
 
+                    spk_model_instance = None
+                    if settings.ASR_ENABLE_SPK:
+                        logger.debug("预加载全局SPK模型")
+                        spk_model_instance = get_global_spk_model(self._device)
+
                     # 创建临时AutoModel包装器（复用已加载的模型）
                     temp_automodel = TempAutoModelWrapper()
                     temp_automodel.model = self.offline_model.model
@@ -533,6 +539,11 @@ class FunASREngine(RealTimeASREngine):
                     if punc_model_instance:
                         temp_automodel.punc_model = punc_model_instance.model
                         temp_automodel.punc_kwargs = punc_model_instance.kwargs
+
+                    # 设置SPK（使用全局实例）
+                    if spk_model_instance:
+                        temp_automodel.spk_model = spk_model_instance.model
+                        temp_automodel.spk_kwargs = spk_model_instance.kwargs
 
                     logger.debug("临时AutoModel构建完成，调用generate")
                     generate_kwargs: Dict[str, Any] = {
@@ -642,6 +653,10 @@ class FunASREngine(RealTimeASREngine):
                 if enable_punctuation:
                     punc_model_instance = get_global_punc_model(self._device)
 
+                spk_model_instance = None
+                if settings.ASR_ENABLE_SPK:
+                    spk_model_instance = get_global_spk_model(self._device)
+
                 # 创建临时 AutoModel 包装器
                 temp_automodel = TempAutoModelWrapper()
                 temp_automodel.model = self.offline_model.model
@@ -656,6 +671,11 @@ class FunASREngine(RealTimeASREngine):
                 if punc_model_instance:
                     temp_automodel.punc_model = punc_model_instance.model
                     temp_automodel.punc_kwargs = punc_model_instance.kwargs
+
+                # 设置 SPK
+                if spk_model_instance:
+                    temp_automodel.spk_model = spk_model_instance.model
+                    temp_automodel.spk_kwargs = spk_model_instance.kwargs
 
                 # 调用识别
                 generate_kwargs: Dict[str, Any] = {
@@ -785,6 +805,10 @@ _punc_model_lock = threading.Lock()
 _global_punc_realtime_model = None
 _punc_realtime_model_lock = threading.Lock()
 
+# 全局说话人识别模型缓存（避免重复加载）
+_global_spk_model = None
+_spk_model_lock = threading.Lock()
+
 
 def get_global_vad_model(device: str):
     """获取全局VAD模型实例"""
@@ -898,6 +922,43 @@ def clear_global_punc_realtime_model():
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
             logger.info("全局标点符号模型（实时）缓存已清理")
+
+
+def get_global_spk_model(device: str):
+    """获取全局说话人识别模型实例"""
+    global _global_spk_model
+
+    with _spk_model_lock:
+        if _global_spk_model is None:
+            try:
+                resolved_spk_path = resolve_model_path(settings.SPK_MODEL)
+                logger.info(f"正在加载全局说话人识别模型: {resolved_spk_path}")
+
+                _global_spk_model = AutoModel(
+                    model=resolved_spk_path,
+                    device=device,
+                    **settings.FUNASR_AUTOMODEL_KWARGS,
+                )
+                logger.info("全局说话人识别模型加载成功")
+            except Exception as e:
+                logger.error(f"全局说话人识别模型加载失败: {str(e)}")
+                _global_spk_model = None
+                raise
+
+    return _global_spk_model
+
+
+def clear_global_spk_model():
+    """清理全局说话人识别模型缓存"""
+    global _global_spk_model
+
+    with _spk_model_lock:
+        if _global_spk_model is not None:
+            del _global_spk_model
+            _global_spk_model = None
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            logger.info("全局说话人识别模型缓存已清理")
 
 
 def get_asr_engine() -> BaseASREngine:

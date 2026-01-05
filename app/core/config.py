@@ -70,6 +70,8 @@ ASR 通用服务（地址 asr-ai.xxx.heiyu.space）是 slim 版本，仅内置�
     PUNC_REALTIME_MODEL: str = (
         MODELSCOPE_PATH + "/iic/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727"
     )
+    SPK_MODEL: str = MODELSCOPE_PATH + "/iic/speech_campplus_sv_zh-cn_16k-common"
+    ASR_ENABLE_SPK: bool = False
 
     # 语言模型配置
     LM_MODEL: str = MODELSCOPE_PATH + "/iic/speech_ngram_lm_zh-cn-ai-wesp-fst"
@@ -146,6 +148,10 @@ ASR 通用服务（地址 asr-ai.xxx.heiyu.space）是 slim 版本，仅内置�
         self.PUNC_MODEL = os.getenv("PUNC_MODEL", self.PUNC_MODEL)
         self.PUNC_MODEL_REVISION = os.getenv("PUNC_MODEL_REVISION", self.PUNC_MODEL_REVISION)
         self.PUNC_REALTIME_MODEL = os.getenv("PUNC_REALTIME_MODEL", self.PUNC_REALTIME_MODEL)
+        self.SPK_MODEL = os.getenv("SPK_MODEL", self.SPK_MODEL)
+        self.ASR_ENABLE_SPK = (
+            os.getenv("ASR_ENABLE_SPK", str(self.ASR_ENABLE_SPK)).lower() == "true"
+        )
 
         # 语言模型配置
         self.LM_MODEL = os.getenv("LM_MODEL", self.LM_MODEL)

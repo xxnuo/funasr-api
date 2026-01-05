@@ -56,6 +56,7 @@ def print_model_statistics(result: dict, use_logger: bool = True):
         "vad_model": "VAD模型",
         "punc_model": "标点符号模型(离线)",
         "punc_realtime_model": "标点符号模型(实时)",
+        "spk_model": "说话人识别模型",
     }
 
     for key, name in other_models.items():
@@ -111,6 +112,7 @@ def preload_models() -> dict:
         "vad_model": {"loaded": False, "error": None},
         "punc_model": {"loaded": False, "error": None},
         "punc_realtime_model": {"loaded": False, "error": None},
+        "spk_model": {"loaded": False, "error": None},
     }
 
     from ..core.config import settings
@@ -268,6 +270,28 @@ def preload_models() -> dict:
             logger.error(f"❌ 实时标点符号模型加载失败: {e}")
     else:
         logger.info("⏭️  跳过实时标点符号模型加载 (ASR_ENABLE_REALTIME_PUNC=False)")
+
+    # 6. 预加载说话人识别模型 (如果启用)
+    if settings.ASR_ENABLE_SPK:
+        try:
+            logger.info("📥 正在加载说话人识别模型...")
+            from ..services.asr.engine import get_global_spk_model
+
+            device = asr_engine.device if asr_engine else settings.DEVICE
+            spk_model = get_global_spk_model(device)
+
+            if spk_model:
+                result["spk_model"]["loaded"] = True
+                logger.info("✅ 说话人识别模型加载成功")
+            else:
+                result["spk_model"]["error"] = "说话人识别模型加载后返回None"
+                logger.warning("⚠️  说话人识别模型加载后返回None")
+
+        except Exception as e:
+            result["spk_model"]["error"] = str(e)
+            logger.error(f"❌ 说话人识别模型加载失败: {e}")
+    else:
+        logger.info("⏭️  跳过说话人识别模型加载 (ASR_ENABLE_SPK=False)")
 
     # 打印统计结果到日志
     print_model_statistics(result, use_logger=True)
