@@ -190,6 +190,17 @@ async def get_asr_params(request: Request) -> ASRQueryParams:
                 "description": "是否启用 ITN（数字转换）",
             },
             {
+                "name": "enable_spk",
+                "in": "query",
+                "required": False,
+                "schema": {
+                    "type": "boolean",
+                    "default": True,
+                    "example": True,
+                },
+                "description": "是否启用说话人识别",
+            },
+            {
                 "name": "max_segment_sec",
                 "in": "query",
                 "required": False,
@@ -335,6 +346,7 @@ async def asr_transcribe(
             hotwords=hotwords,
             enable_punctuation=params.enable_punctuation,
             enable_itn=params.enable_itn,
+            enable_spk=params.enable_spk,
             sample_rate=params.sample_rate,
             max_segment_sec=params.max_segment_sec,
             min_segment_sec=params.min_segment_sec,
@@ -348,6 +360,7 @@ async def asr_transcribe(
                 "text": seg.text,
                 "start_time": round(seg.start_time, 2),
                 "end_time": round(seg.end_time, 2),
+                "speaker": seg.speaker,
             }
             for seg in asr_result.segments
         ]

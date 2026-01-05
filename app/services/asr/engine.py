@@ -53,6 +53,7 @@ class ASRSegmentResult:
     text: str  # 该段识别文本
     start_time: float  # 开始时间（秒）
     end_time: float  # 结束时间（秒）
+    speaker: Optional[int] = None  # 说话人ID
 
 
 @dataclass
@@ -127,6 +128,7 @@ class BaseASREngine(ABC):
         enable_punctuation: bool = False,
         enable_itn: bool = False,
         enable_vad: bool = False,
+        enable_spk: bool = False,
         sample_rate: int = 16000,
     ) -> str:
         """转录音频文件"""
@@ -139,6 +141,7 @@ class BaseASREngine(ABC):
         hotwords: str = "",
         enable_punctuation: bool = True,
         enable_itn: bool = True,
+        enable_spk: bool = True,
         sample_rate: int = 16000,
     ) -> ASRRawResult:
         """使用 VAD 转录音频文件，返回带时间戳分段的结果"""
@@ -150,6 +153,7 @@ class BaseASREngine(ABC):
         hotwords: str = "",
         enable_punctuation: bool = False,
         enable_itn: bool = False,
+        enable_spk: bool = False,
         sample_rate: int = 16000,
         max_segment_sec: float = settings.MAX_SEGMENT_SEC,
         min_segment_sec: float = settings.MIN_SEGMENT_SEC,
@@ -161,6 +165,7 @@ class BaseASREngine(ABC):
             hotwords: 热词
             enable_punctuation: 是否启用标点
             enable_itn: 是否启用 ITN
+            enable_spk: 是否启用说话人识别
             sample_rate: 采样率
             max_segment_sec: 每段最大时长（秒）
             min_segment_sec: 每段最小时长（秒）
@@ -186,6 +191,7 @@ class BaseASREngine(ABC):
                     hotwords=hotwords,
                     enable_punctuation=enable_punctuation,
                     enable_itn=enable_itn,
+                    enable_spk=enable_spk,
                     sample_rate=sample_rate,
                 )
 
@@ -240,6 +246,7 @@ class BaseASREngine(ABC):
                             enable_punctuation=enable_punctuation,
                             enable_itn=enable_itn,
                             enable_vad=False,  # 分段后不再需要 VAD
+                            enable_spk=enable_spk,
                             sample_rate=sample_rate,
                         )
 
@@ -473,9 +480,10 @@ class FunASREngine(RealTimeASREngine):
         enable_punctuation: bool = False,
         enable_itn: bool = False,
         enable_vad: bool = False,
+        enable_spk: bool = False,
         sample_rate: int = 16000,
     ) -> str:
-        """使用FunASR转录音频文件（支持动态启用VAD和PUNC）
+        """使用FunASR转录音频文件（支持动态启用VAD和PUNC和SPK）
 
         根据参数组合采用不同策略：
         1. 远程代码模型（如 Fun-ASR-Nano）：直接调用，不使用外部 VAD/PUNC
@@ -521,7 +529,8 @@ class FunASREngine(RealTimeASREngine):
                         punc_model_instance = get_global_punc_model(self._device)
 
                     spk_model_instance = None
-                    if settings.ASR_ENABLE_SPK:
+                    need_spk = enable_spk if enable_spk is not None else settings.ASR_ENABLE_SPK
+                    if need_spk:
                         logger.debug("预加载全局SPK模型")
                         spk_model_instance = get_global_spk_model(self._device)
 
@@ -609,6 +618,7 @@ class FunASREngine(RealTimeASREngine):
         hotwords: str = "",
         enable_punctuation: bool = True,
         enable_itn: bool = True,
+        enable_spk: bool = True,
         sample_rate: int = 16000,
     ) -> ASRRawResult:
         """使用 VAD 转录音频文件，返回带时间戳分段的结果
@@ -618,6 +628,7 @@ class FunASREngine(RealTimeASREngine):
             hotwords: 热词
             enable_punctuation: 是否启用标点
             enable_itn: 是否启用 ITN
+            enable_spk: 是否启用说话人识别
             sample_rate: 采样率
 
         Returns:
@@ -654,7 +665,8 @@ class FunASREngine(RealTimeASREngine):
                     punc_model_instance = get_global_punc_model(self._device)
 
                 spk_model_instance = None
-                if settings.ASR_ENABLE_SPK:
+                need_spk = enable_spk if enable_spk is not None else settings.ASR_ENABLE_SPK
+                if need_spk:
                     spk_model_instance = get_global_spk_model(self._device)
 
                 # 创建临时 AutoModel 包装器
@@ -709,13 +721,13 @@ class FunASREngine(RealTimeASREngine):
                 if sentence_info and isinstance(sentence_info, list):
                     for sent in sentence_info:
                         try:
+                            spk = None
                             if isinstance(sent, dict):
-                                # 格式: {"start": ms, "end": ms, "text": "..."}
                                 start_ms = sent.get("start", 0)
                                 end_ms = sent.get("end", 0)
                                 text = sent.get("text", "")
+                                spk = sent.get("spk", None)
                             elif isinstance(sent, (list, tuple)) and len(sent) >= 3:
-                                # 格式: [start_ms, end_ms, "text"]
                                 start_ms = sent[0]
                                 end_ms = sent[1]
                                 text = sent[2] if len(sent) > 2 else ""
@@ -726,6 +738,7 @@ class FunASREngine(RealTimeASREngine):
                                 text=str(text),
                                 start_time=start_ms / 1000.0,
                                 end_time=end_ms / 1000.0,
+                                speaker=spk,
                             ))
                         except (IndexError, TypeError, KeyError) as e:
                             logger.warning(f"解析 sentence_info 项失败: {e}")

@@ -71,7 +71,7 @@ ASR 通用服务（地址 asr-ai.xxx.heiyu.space）是 slim 版本，仅内置�
         MODELSCOPE_PATH + "/iic/punc_ct-transformer_zh-cn-common-vad_realtime-vocab272727"
     )
     SPK_MODEL: str = MODELSCOPE_PATH + "/iic/speech_campplus_sv_zh-cn_16k-common"
-    ASR_ENABLE_SPK: bool = False
+    ASR_ENABLE_SPK: bool = True
 
     # 语言模型配置
     LM_MODEL: str = MODELSCOPE_PATH + "/iic/speech_ngram_lm_zh-cn-ai-wesp-fst"

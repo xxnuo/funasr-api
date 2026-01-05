@@ -291,6 +291,10 @@ async def create_transcription(
         True,
         description="是否启用 ITN（数字转换）"
     ),
+    enable_spk: Optional[bool] = Form(
+        True,
+        description="是否启用说话人识别"
+    ),
     max_segment_sec: Optional[float] = Form(
         settings.MAX_SEGMENT_SEC,
         ge=0.1,
@@ -384,6 +388,7 @@ async def create_transcription(
             hotwords="",
             enable_punctuation=enable_punctuation,
             enable_itn=enable_itn,
+            enable_spk=enable_spk,
             sample_rate=16000,
             max_segment_sec=actual_max_segment_sec,
             min_segment_sec=min_segment_sec,

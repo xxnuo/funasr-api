@@ -63,6 +63,11 @@ class ASRQueryParams(BaseModel):
         description="是否启用ITN（数字转换）",
     )
 
+    enable_spk: Optional[bool] = Field(
+        default=True,
+        description="是否启用说话人识别，不指定则使用默认配置（ASR_ENABLE_SPK环境变量）",
+    )
+
     max_segment_sec: Optional[float] = Field(
         default=settings.MAX_SEGMENT_SEC,
         ge=0.1,
@@ -96,6 +101,10 @@ class ASRSegment(BaseModel):
         ...,
         description="段落结束时间（秒）",
     )
+    speaker: Optional[int] = Field(
+        default=None,
+        description="说话人ID（启用说话人识别时返回）",
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -103,6 +112,7 @@ class ASRSegment(BaseModel):
                 "text": "今天天气不错。",
                 "start_time": 0.0,
                 "end_time": 2.5,
+                "speaker": 0,
             }
         }
     }
